@@ -29,27 +29,36 @@ cover::CoverTraits Directolor::get_traits() {
 }
 
 void Directolor::control(const cover::CoverCall &call) {
-	if (call.get_open()) {
-      // Cover open action requested
-      this->publish_state(cover::COVER_OPEN); // Update cover state (optional)
+  // Check the command using get_command()
+  auto command = call.get_command();
+  if (command.has_value()) {  // Ensure a command was provided
+    switch (*command) {
+      case cover::COVER_COMMAND_OPEN:
+        // Cover open action requested
+        this->publish_state(cover::COVER_OPEN); // Update cover state
 
-      // Flash the LED 3 times
-      for (int i = 0; i < 3; i++) {
-		ESP_LOGD("directolor", "Open called, flashing LED");
-        digitalWrite(this->led_pin_, HIGH); // Turn LED on
-        delay(200);             // Wait 200ms
-        digitalWrite(this->led_pin_, LOW);  // Turn LED off
-        delay(200);             // Wait 200ms
-      }
+        // Flash the LED 3 times
+        for (int i = 0; i < 3; i++) {
+          ESP_LOGD("directolor", "Open called, flashing LED");
+          digitalWrite(this->led_pin_, HIGH); // Turn LED on
+          delay(200);                         // Wait 200ms
+          digitalWrite(this->led_pin_, LOW);  // Turn LED off
+          delay(200);                         // Wait 200ms
+        }
+        break;
+
+      case cover::COVER_COMMAND_CLOSE:
+        // Handle close action
+        this->publish_state(cover::COVER_CLOSED);
+        digitalWrite(this->led_pin_, LOW); // Turn LED off (example)
+        break;
+
+      case cover::COVER_COMMAND_STOP:
+        // Handle stop action (optional)
+        ESP_LOGD("directolor", "Stop called");
+        break;
     }
-    else if (call.get_close()) {
-      // Handle close action (no LED flashing here, just example)
-      this->publish_state(cover::COVER_CLOSED);
-    }
-    else if (call.get_stop()) {
-      // Handle stop action (optional)
-    }
-}
+  }}
 
 }  // namespace directolor
 }  // namespace esphome
