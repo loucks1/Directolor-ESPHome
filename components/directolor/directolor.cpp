@@ -6,12 +6,8 @@ namespace directolor {
 
 static const char *TAG = "directolor.cover";
 
-void Directolor::set_led_pin(int pin) {
-  led_pin_ = pin;
-}
-
 void Directolor::setup() {
-	pinMode(led_pin_, OUTPUT);
+	pinMode(this->pin_, OUTPUT);
 	ESP_LOGD("directolor", "setup called");
 }
 
@@ -40,9 +36,9 @@ void Directolor::control(const cover::CoverCall &call) {
       // Flash the LED 3 times
       for (int i = 0; i < 3; i++) {
 		ESP_LOGD("directolor", "Open called, flashing LED");
-        digitalWrite(led_pin_, HIGH); // Turn LED on
+        digitalWrite(this->pin_, HIGH); // Turn LED on
         delay(200);             // Wait 200ms
-        digitalWrite(led_pin_, LOW);  // Turn LED off
+        digitalWrite(this->pin_, LOW);  // Turn LED off
         delay(200);             // Wait 200ms
       }
     }
