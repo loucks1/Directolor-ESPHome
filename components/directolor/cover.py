@@ -8,7 +8,7 @@ Directolor = directolor_ns.class_("Directolor", cover.Cover, cg.Component)
 
 CONFIG_SCHEMA = cover.COVER_SCHEMA.extend({
     cv.GenerateID(): cv.declare_id(Directolor),
-    cv.Required("led_pin"): pins.gpio_output_pin_schema
+    cv.Required("led_pin"): cv.int_range(min=0, max=40)  # Require an LED pin (0-40)
 }).extend(cv.COMPONENT_SCHEMA)
 
 
