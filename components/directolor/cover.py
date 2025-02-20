@@ -17,4 +17,4 @@ async def to_code(config):
     await cg.register_component(var, config)
     await cover.register_cover(var, config)
     
-    cg.add(var.set_pin(pin))
+    cg.add(var.set_pin(config["led_pin"]))
