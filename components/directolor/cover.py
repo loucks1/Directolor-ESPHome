@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import cover, CONF_PIN
+from esphome.components import cover
 from esphome.const import CONF_ID
 
 directolor_ns = cg.esphome_ns.namespace("directolor")
@@ -8,7 +8,7 @@ Directolor = directolor_ns.class_("Directolor", cover.Cover, cg.Component)
 
 CONFIG_SCHEMA = cover.COVER_SCHEMA.extend({
     cv.GenerateID(): cv.declare_id(Directolor),
-    cv.Required(CONF_PIN): pins.gpio_output_pin_schema
+    cv.Required("led_pin"): pins.gpio_output_pin_schema
 }).extend(cv.COMPONENT_SCHEMA)
 
 
@@ -17,5 +17,5 @@ async def to_code(config):
     await cg.register_component(var, config)
     await cover.register_cover(var, config)
     
-    pin = await cg.gpio_pin_expression(config[CONF_PIN])
+    pin = await cg.gpio_pin_expression(config["led_pin"])
     cg.add(var.set_pin(pin))
