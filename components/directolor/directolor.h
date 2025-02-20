@@ -8,7 +8,7 @@ namespace directolor {
 
 class Directolor : public cover::Cover, public Component {
  public:
-  void set_pin(GPIOPin *pin) { pin_ = pin; }
+  void set_pin(int pin) { led_pin_ = pin; }
 
   void setup() override;
   void loop() override;
@@ -19,7 +19,7 @@ class Directolor : public cover::Cover, public Component {
  protected:
   void control(const cover::CoverCall &call) override;
 
-  GPIOPin *pin_;
+  int led_pin_;
 };
 
 }  // namespace directolor
