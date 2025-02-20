@@ -12,6 +12,7 @@ void Directolor::set_led_pin(int pin) {
 
 void Directolor::setup() {
 	pinMode(led_pin_, OUTPUT);
+	ESP_LOGD("directolor", "setup called");
 }
 
 void Directolor::loop() {
