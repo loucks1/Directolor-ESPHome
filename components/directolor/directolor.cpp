@@ -31,7 +31,7 @@ cover::CoverTraits Directolor::get_traits() {
 void Directolor::control(const cover::CoverCall &call) {
   
 //        this->publish_state(cover::COVER_OPEN); // Update cover state
-          ESP_LOGD("directolor", "Open called, flashing LED" + String(call.position_));
+          ESP_LOGD("directolor", "Open called, flashing LED" + String(call.position));
 
         // Flash the LED 3 times
         for (int i = 0; i < 3; i++) {
