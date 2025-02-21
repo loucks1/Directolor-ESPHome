@@ -30,11 +30,11 @@ cover::CoverTraits Directolor::get_traits() {
 
 void Directolor::control(const cover::CoverCall &call) {
   
-        this->publish_state(cover::COVER_OPEN); // Update cover state
+//        this->publish_state(cover::COVER_OPEN); // Update cover state
+          ESP_LOGD("directolor", "Open called, flashing LED" + String(call.position_));
 
         // Flash the LED 3 times
         for (int i = 0; i < 3; i++) {
-          ESP_LOGD("directolor", "Open called, flashing LED");
           digitalWrite(this->led_pin_, HIGH); // Turn LED on
           delay(200);                         // Wait 200ms
           digitalWrite(this->led_pin_, LOW);  // Turn LED off
