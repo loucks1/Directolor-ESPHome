@@ -29,10 +29,12 @@ cover::CoverTraits Directolor::get_traits() {
 }
 
 void Directolor::control(const cover::CoverCall &call) {
-  
-//        this->publish_state(cover::COVER_OPEN); // Update cover state
-          ESP_LOGD("directolor", "Open called, flashing LED" + String(call.position));
+  if (call.get_position().has_value()) {
+       float target = *call.get_position();
+       this->current_operation =
+           target > this->position ? cover::COVER_OPERATION_OPENING : cover::COVER_OPERATION_CLOSING;
 
+	  ESP_LOGD("directolor", "Open called, flashing LED" + String(target));
         // Flash the LED 3 times
         for (int i = 0; i < 3; i++) {
           digitalWrite(this->led_pin_, HIGH); // Turn LED on
@@ -40,6 +42,21 @@ void Directolor::control(const cover::CoverCall &call) {
           digitalWrite(this->led_pin_, LOW);  // Turn LED off
           delay(200);                         // Wait 200ms
         }
+
+       this->set_timeout("move", 2000, [this, target]() {
+         this->current_operation = cover::COVER_OPERATION_IDLE;
+         this->position = target;
+         this->publish_state();
+       });
+     }
+     if (call.get_tilt().has_value()) {
+       this->tilt = *call.get_tilt();
+     }
+     if (call.get_stop()) {
+       this->cancel_timeout("move");
+     }
+ 
+     this->publish_state();
   }
 
 }  // namespace directolor
