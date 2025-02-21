@@ -35,7 +35,7 @@ void Directolor::control(const cover::CoverCall &call) {
            target > this->position ? cover::COVER_OPERATION_OPENING : cover::COVER_OPERATION_CLOSING;
 
 	  ESP_LOGD("directolor", "Open called, flashing LED");
-	  ESP_LOGD("directolor", String(target));
+	  ESP_LOGD("directolor", String(target).c_str());
         // Flash the LED 3 times
         for (int i = 0; i < 3; i++) {
           digitalWrite(this->led_pin_, HIGH); // Turn LED on
