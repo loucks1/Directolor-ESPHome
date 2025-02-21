@@ -57,7 +57,7 @@ void Directolor::control(const cover::CoverCall &call) {
        this->cancel_timeout("move");
      }
  
-     this->publish_state();
+    // this->publish_state();
   }
 
 }  // namespace directolor
