@@ -9,6 +9,13 @@ static const char *TAG = "directolor.cover";
 void Directolor::setup() {
 	pinMode(this->led_pin_, OUTPUT);
 	ESP_LOGD("directolor", "setup called");
+
+	for (int i = 0; i < DIRECTOLOR_MAX_QUEUED_COMMANDS; i++)
+  	{
+    		commandItems[i].radioCodes = 0;
+		commandItems[i].blindAction = directolor_stop;
+    		commandItems[i].channels = 0;
+  	}
 }
 
 void Directolor::loop() {
