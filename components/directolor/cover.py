@@ -7,7 +7,7 @@ directolor_ns = cg.esphome_ns.namespace("directolor")
 Directolor = directolor_ns.class_("Directolor", cover.Cover, cg.Component)
 
 cg.add_library("SPI", None)
-cg.add_library("RF24", version="1.4.11")
+cg.add_library("RF24", None, owner="nrf24")
 
 CONFIG_SCHEMA = cover.COVER_SCHEMA.extend({
     cv.GenerateID(): cv.declare_id(Directolor),
