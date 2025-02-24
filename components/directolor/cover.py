@@ -11,8 +11,8 @@ cg.add_library("nrf24/RF24", None)
 
 CONFIG_SCHEMA = cover.COVER_SCHEMA.extend({
     cv.GenerateID(): cv.declare_id(Directolor),
-    cv.Required("led_pin"): cv.int_range(min=0, max=40)  # Require an LED pin (0-40)
-    cv.Required("ce_pin"): cv.int_range(min=0, max=40)  # Require a CE pin (0-40)
+    cv.Required("led_pin"): cv.int_range(min=0, max=40),  # Require an LED pin (0-40)
+    cv.Required("ce_pin"): cv.int_range(min=0, max=40),  # Require a CE pin (0-40)
     cv.Required("cs_pin"): cv.int_range(min=0, max=40)  # Require a CS pin (0-40)
 
 }).extend(cv.COMPONENT_SCHEMA)
