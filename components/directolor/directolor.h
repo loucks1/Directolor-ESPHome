@@ -42,6 +42,8 @@ namespace directolor {
 class Directolor : public cover::Cover, public Component {
  public:
   void set_pin(int pin) { led_pin_ = pin; }
+  void set_ce_pin(int pin) { ce_pin_ = pin; }
+  void set_cs_pin(int pin) { cs_pin_ = pin; }
 
   void setup() override;
   void loop() override;
@@ -84,6 +86,8 @@ class Directolor : public cover::Cover, public Component {
   void control(const cover::CoverCall &call) override;
 
   int led_pin_;
+  int ce_pin_;
+  int cs_pin_;
 };
 
 }  // namespace directolor
