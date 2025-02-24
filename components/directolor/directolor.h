@@ -75,7 +75,6 @@ class Directolor : public cover::Cover, public Component {
    static bool radioValid;
    static RemoteCode remoteCode;
    static unsigned long lastMillis;
-   static CommandItem commandItems[DIRECTOLOR_MAX_QUEUED_COMMANDS];
    static short lastCommand;
    static uint16_t _cepin;
    static uint16_t _cspin;
@@ -84,6 +83,8 @@ class Directolor : public cover::Cover, public Component {
   
  protected:
   void control(const cover::CoverCall &call) override;
+
+  static CommandItem commandItems[DIRECTOLOR_MAX_QUEUED_COMMANDS];
 
   int led_pin_;
   int ce_pin_;
