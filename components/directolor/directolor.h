@@ -84,7 +84,7 @@ class Directolor : public cover::Cover, public Component {
  protected:
   void control(const cover::CoverCall &call) override;
 
-  static CommandItem commandItems[DIRECTOLOR_MAX_QUEUED_COMMANDS];
+  CommandItem commandItems[DIRECTOLOR_MAX_QUEUED_COMMANDS];
 
   int led_pin_;
   int ce_pin_;
