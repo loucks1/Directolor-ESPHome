@@ -80,11 +80,10 @@ class Directolor : public cover::Cover, public Component {
    static uint16_t _cspin;
    static uint32_t _spi_speed;
    static bool radioInitialized;
+   CommandItem commandItems[DIRECTOLOR_MAX_QUEUED_COMMANDS];
   
  protected:
   void control(const cover::CoverCall &call) override;
-
-  CommandItem commandItems[DIRECTOLOR_MAX_QUEUED_COMMANDS];
 
   int led_pin_;
   int ce_pin_;
