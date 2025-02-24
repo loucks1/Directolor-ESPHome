@@ -12,9 +12,9 @@ void Directolor::setup() {
 
 	for (int i = 0; i < DIRECTOLOR_MAX_QUEUED_COMMANDS; i++)
   	{
-    		commandItems[i].radioCodes = 0;
-		commandItems[i].blindAction = directolor_stop;
-    		commandItems[i].channels = 0;
+    		this->commandItems[i].radioCodes = 0;
+		this->commandItems[i].blindAction = directolor_stop;
+    		this->commandItems[i].channels = 0;
   	}
 }
 
