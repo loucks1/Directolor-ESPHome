@@ -70,7 +70,7 @@ namespace esphome
             App.register_switch(join_switch_);
 
             join_button_ = new JoinButton(this);
-            join_button_->set_name("upper shades join");
+            join_button_->set_name(this->name_.c_str() + " Join");
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(join_button_);
