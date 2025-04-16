@@ -10,7 +10,7 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
-        static const char *TEST = "HERE IS MY NAME";
+        static char *TEST = "HERE IS MY NAME";
 
         void DirectolorCover::dump_config()
         {
@@ -76,6 +76,8 @@ namespace esphome
 
             std::string button_name = this->get_name() + " JOIN";
 
+            TEST = "updated MY NAME";
+                    
             join_button_ = new JoinButton(this);
             join_button_->set_name(TEST);
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
