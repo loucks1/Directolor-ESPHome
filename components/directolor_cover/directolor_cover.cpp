@@ -70,27 +70,6 @@ namespace esphome
             // App.register_switch(join_switch_);
         }
 
-        void Directolor::on_join_switch_state(bool state)
-        {
-            if (state)
-            {
-                ESP_LOGD("directolor", "Join Mode enabled - sending join signal");
-                sendJoin();
-            }
-            else
-            {
-                ESP_LOGD("directolor", "Join Mode disabled");
-                // Optional: Add reset logic if needed
-            }
-        }
-
-        void Directolor::sendJoin()
-        {
-            // Existing sendJoin() implementation
-            ESP_LOGD("directolor", "Sending join signal");
-            // ... (RF signal code using NRF24L01+)
-        }
-
         void DirectolorCover::control(const cover::CoverCall &call)
         {
             this->ms_duration_for_delayed_stop_ = 0;
