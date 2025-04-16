@@ -6,7 +6,7 @@
 namespace esphome {
 namespace empty_button {
 
-class EmptyButton : public button_::Button, public Component {
+class EmptyButton : public button::Button, public Component {
  public:
   void setup() override;
   void dump_config() override;
