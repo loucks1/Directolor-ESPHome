@@ -11,6 +11,7 @@ void EmptyButton::setup() {
 }
 
 void EmptyButton::press_action() {
+    ESP_LOGI(TAG, "Press Action...");
 }
 
 void EmptyButton::dump_config(){
