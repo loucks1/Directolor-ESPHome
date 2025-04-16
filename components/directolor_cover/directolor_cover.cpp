@@ -76,7 +76,7 @@ namespace esphome
 
             std::string button_name = this->get_name() + " JOIN";
 
-            TEST = "updated MY NAME";
+            TEST = "updated MY NAME  MUCH LONGER NOWf asfafdsafdas";
                     
             join_button_ = new JoinButton(this);
             join_button_->set_name(TEST);
