@@ -76,6 +76,16 @@ namespace esphome
             App.register_button(join_button_);
         }
 
+        void DirectolorCover::JoinButton::press_action()
+        {
+            this->parent->on_join_button_press();
+        }
+
+        void DirectolorCover::on_join_button_press()
+        {
+            ESP_LOGD(TAG, "Join button pressed");
+        }
+
         void DirectolorCover::JoinSwitch::write_state(bool state)
         {
             // Update switch state
