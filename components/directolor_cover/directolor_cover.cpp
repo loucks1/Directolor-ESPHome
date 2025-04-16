@@ -72,13 +72,13 @@ namespace esphome
             join_button_ = new JoinButton(this);
             join_button_->set_name("upper shades join");
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
-            
+
             App.register_button(join_button_);
         }
 
         void DirectolorCover::JoinButton::press_action()
         {
-            this->parent->on_join_button_press();
+            this->parent_->on_join_button_press();
         }
 
         void DirectolorCover::on_join_button_press()
