@@ -1,5 +1,6 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
+#include "esphome/core.h"
 
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
 
