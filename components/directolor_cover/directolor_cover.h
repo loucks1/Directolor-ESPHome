@@ -75,7 +75,7 @@ namespace esphome
 
       private:
         DirectolorCover *parent_;
-      }
+      };
 
       class JoinSwitch : public switch_::Switch
       {
