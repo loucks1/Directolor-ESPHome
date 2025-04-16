@@ -14,6 +14,7 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
             // ESP_LOGCONFIG("directolor.cover", "  Radio Code: 0x%02X, 0x%02X", this->radio_id_, this->command_);
+            ESP_LOGCONFIG(TAG, (this->get_name() + " Join LOG LOG LOG").c_str()); 
         }
 
         cover::CoverTraits DirectolorCover::get_traits()
