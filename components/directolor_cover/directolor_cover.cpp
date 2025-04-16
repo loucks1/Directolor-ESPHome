@@ -76,7 +76,7 @@ namespace esphome
             std::string button_name = this->get_name() + " JOIN";
 
             join_button_ = new JoinButton(this);
-            join_button_->set_name(button_name);
+            join_button_->set_name(button_name.c_str());
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(join_button_);
