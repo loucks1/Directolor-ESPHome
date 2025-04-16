@@ -1,4 +1,5 @@
 #pragma once
+#include "esphome.h"
 #include "esphome/core/component.h"
 #include "esphome/components/cover/cover.h"
 #include "esphome/components/switch/switch.h"
