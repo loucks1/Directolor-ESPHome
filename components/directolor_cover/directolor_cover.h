@@ -64,6 +64,7 @@ namespace esphome
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
 
+      esphome::switch_::Switch *join_switch_ = nullptr;
     };
 
   } // namespace directolor_cover

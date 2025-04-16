@@ -62,12 +62,12 @@ namespace esphome
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
 
-            // // Initialize and register the join switch
-            // join_switch_ = new esphome::switch_::Switch();
-            // join_switch_->set_name("Directolor Join Mode");
-            // join_switch_->add_on_state_callback([this](bool state)
-            //                                     { this->on_join_switch_state(state); });
-            // App.register_switch(join_switch_);
+            // Initialize and register the join switch
+            join_switch_ = new esphome::switch_::Switch();
+            join_switch_->set_name("Directolor Join Mode");
+            join_switch_->add_on_state_callback([this](bool state)
+                                                { this->on_join_switch_state(state); });
+            App.register_switch(join_switch_);
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
