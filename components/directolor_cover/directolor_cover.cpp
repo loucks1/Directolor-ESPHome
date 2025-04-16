@@ -1,5 +1,6 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
+#include "esphome/components/button/template_button.h"
 
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
 
@@ -60,7 +61,23 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
+
+            auto *join_button = new button::TemplateButton();
+            join_button->set_name("Join Cover");
+            join_button->set_press_callback([this]()
+                                            {
+                                                ESP_LOGI("directolor", "Join button pressed!");
+                                                this->do_join(); // Create this method in your class
+                                            });
+
+            App.register_component(join_button);
         }
+
+        void DirectolorCover::do_join() {
+            // Your custom join logic here
+            ESP_LOGI("directolor", "Performing join logic!");
+          }
+          
 
         void DirectolorCover::control(const cover::CoverCall &call)
         {

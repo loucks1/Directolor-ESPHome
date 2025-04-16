@@ -1,0 +1,5 @@
+{
+    "domain": "directolor",
+    "name": "Directolor Cover",
+    "dependencies": ["button"]
+ } 

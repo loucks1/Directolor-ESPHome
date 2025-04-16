@@ -45,6 +45,8 @@ namespace esphome
       void control(const cover::CoverCall &call) override;
       void setup() override;
       void loop() override;
+      
+      void do_join();
 
     protected:
       esphome::nrf24l01_base::Nrf24l01_base *base_;
@@ -62,6 +64,8 @@ namespace esphome
 
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
+
+      
     };
 
   } // namespace directolor_cover
