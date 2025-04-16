@@ -47,6 +47,8 @@ namespace esphome
       void setup() override;
       void loop() override;
 
+      void sendJoin();
+
     protected:
       esphome::nrf24l01_base::Nrf24l01_base *base_;
       int get_radio_command(byte *payload, BlindAction blind_action);
@@ -72,9 +74,9 @@ namespace esphome
         private:
          DirectolorCover* parent_;
        };
-
-      JoinSwitch* *join_switch_ = nullptr;
-      void on_join_switch_state(bool state);
+     
+       JoinSwitch* join_switch_ = nullptr;
+       void on_join_switch_state(bool state);
     };
 
   } // namespace directolor_cover

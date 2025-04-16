@@ -66,32 +66,39 @@ namespace esphome
             join_switch_->set_name("Directolor Join Mode");
             join_switch_->add_on_state_callback([this](bool state)
                                                 { this->on_join_switch_state(state); });
-            esphome::App.register_switch(join_switch_);
+            App.register_switch(join_switch_);
         }
 
-        void DirectolorCover::JoinSwitch::write_state(bool state) {
+        void DirectolorCover::JoinSwitch::write_state(bool state)
+        {
             // Update switch state
             this->publish_state(state);
             // Notify parent of state change
             this->parent_->on_join_switch_state(state);
-          }
-          
-          void DirectolorCover::on_join_switch_state(bool state) {
-            if (state) {
-              ESP_LOGD("directolor_cover", "Join Mode(enabled - sending join signal");
-              sendJoin();
-            } else {
-              ESP_LOGD("directolor_cover", "Join Mode disabled");
-              // Optional: Add reset logic if needed
-            }
-          }
-          
-          void DirectolorCover::sendJoin() {
-            // Existing sendJoin() implementation
-            ESP_LOGD("directolor_cover", "Sending join signal");
-            // ... (RF signal code using NRF24L01+)
-          }
+        }
 
+        void DirectolorCover::on_join_switch_state(bool state)
+        {
+            if (state)
+            {
+                ESP_LOGD("directolor_cover", "Join Mode enabled - sending join signal");
+                this->sendJoin();
+            }
+            else
+            {
+                ESP_LOGD("directolor_cover", "Join Mode disabled");
+                // Optional: Add reset logic if needed
+            }
+        }
+
+        void DirectolorCover::sendJoin()
+        {
+            ESP_LOGD("directolor_cover", "Sending join signal");
+            // Placeholder: Implement RF signal sending via NRF24L01+
+            // Example: Send join code (replace with actual code from codes.h or project)
+            // Assuming a method like send_rf_code exists in your class
+            // send_rf_code(JOIN_CODE); // Define JOIN_CODE in codes.h
+        }
         void DirectolorCover::control(const cover::CoverCall &call)
         {
             this->ms_duration_for_delayed_stop_ = 0;
