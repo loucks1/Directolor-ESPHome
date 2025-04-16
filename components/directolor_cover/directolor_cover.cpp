@@ -71,7 +71,7 @@ namespace esphome
 
             join_button_ = new JoinButton(this);
             join_button_->set_name("upper shades join");
-            join_button_->add_on_press_callback( {this->on_join_button_press(); });
+            join_button_->add_on_press_callback({ this->on_join_button_press(); });
 
             App.register_button(join_button_);
         }
