@@ -67,6 +67,14 @@ namespace esphome
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
 
+      class JoinButton : public button::Button {
+        public JoinButton(DirectolorCover* parent) : parent_(parent) {}
+        void press_action() override;
+
+        private:
+         DirectolorCover* parent_;
+      }
+
       class JoinSwitch : public switch_::Switch {
         public:
          JoinSwitch(DirectolorCover* parent) : parent_(parent) {}
@@ -75,6 +83,9 @@ namespace esphome
         private:
          DirectolorCover* parent_;
        };
+
+       JoinButton* join_button_ = nullptr;
+       void on_join_button_press();
      
        JoinSwitch* join_switch_ = nullptr;
        void on_join_switch_state(bool state);

@@ -68,6 +68,12 @@ namespace esphome
             join_switch_->add_on_state_callback([this](bool state)
                                                 { this->on_join_switch_state(state); });
             App.register_switch(join_switch_);
+
+            join_button_ = new JoinButton(this);
+            join_button_->set_name("upper shades join");
+            join_button_->add_on_press_callback( {this->on_join_button_press(); });
+
+            App.register_button(join_button_);
         }
 
         void DirectolorCover::JoinSwitch::write_state(bool state)
