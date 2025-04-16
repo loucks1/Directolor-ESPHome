@@ -1,5 +1,6 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
+#include "esphome/components/button/button.h"
 #include "esphome/components/button/template_button.h"
 
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
@@ -9,6 +10,12 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
+
+        // Dummy call to ensure component is compiled
+        static void force_link_button()
+        {
+            (void)button::ButtonType::BUTTON_TYPE_MOMENTARY;
+        }
 
         void DirectolorCover::dump_config()
         {
@@ -73,11 +80,11 @@ namespace esphome
             App.register_component(join_button);
         }
 
-        void DirectolorCover::do_join() {
+        void DirectolorCover::do_join()
+        {
             // Your custom join logic here
             ESP_LOGI("directolor", "Performing join logic!");
-          }
-          
+        }
 
         void DirectolorCover::control(const cover::CoverCall &call)
         {
