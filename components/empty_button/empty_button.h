@@ -9,6 +9,7 @@ namespace empty_button {
 class EmptyButton : public button::Button, public Component {
  public:
   void setup() override;
+  void press() override;
   void dump_config() override;
 };
 

@@ -10,6 +10,9 @@ void EmptyButton::setup() {
 
 }
 
+void EmptyButton::press() {
+}
+
 void EmptyButton::dump_config(){
     ESP_LOGCONFIG(TAG, "Empty custom button");
 }
