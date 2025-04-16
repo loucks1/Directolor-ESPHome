@@ -1,6 +1,5 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
-#include "esphome/components/button/button.h"
 #include "esphome/components/button/template_button.h"
 
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
