@@ -11,12 +11,6 @@ namespace esphome
     {
         static const char *TAG = "directolor_cover";
 
-        // Dummy call to ensure component is compiled
-        static void force_link_button()
-        {
-            (void)button::ButtonType::BUTTON_TYPE_MOMENTARY;
-        }
-
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
