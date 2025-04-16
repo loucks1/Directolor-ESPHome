@@ -69,6 +69,8 @@ namespace esphome
                                                 { this->on_join_switch_state(state); });
             App.register_switch(join_switch_);
 
+            ESP_LOGCONFIG(TAG, (this->parent_->get_name() + " Join LOG LOG LOG").c_str()); 
+
             join_button_ = new JoinButton(this);
             join_button_->set_name("Upper Shades Join Button");
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
