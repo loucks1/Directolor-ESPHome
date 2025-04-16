@@ -1,6 +1,6 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
-#include "esphome/components/button/template_button.h"
+
 
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
 
@@ -62,21 +62,33 @@ namespace esphome
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
 
-            auto *join_button = new button::TemplateButton();
-            join_button->set_name("Join Cover");
-            join_button->set_press_callback([this]()
-                                            {
-                                                ESP_LOGI("directolor", "Join button pressed!");
-                                                this->do_join(); // Create this method in your class
-                                            });
-
-            App.register_component(join_button);
+            // Initialize and register the join switch
+            join_switch_ = new esphome::switch_::Switch();
+            join_switch_->set_name("Directolor Join Mode");
+            join_switch_->add_on_state_callback([this](bool state)
+                                                { this->on_join_switch_state(state); });
+            App.register_switch(join_switch_);
         }
 
-        void DirectolorCover::do_join()
+        void Directolor::on_join_switch_state(bool state)
         {
-            // Your custom join logic here
-            ESP_LOGI("directolor", "Performing join logic!");
+            if (state)
+            {
+                ESP_LOGD("directolor", "Join Mode enabled - sending join signal");
+                sendJoin();
+            }
+            else
+            {
+                ESP_LOGD("directolor", "Join Mode disabled");
+                // Optional: Add reset logic if needed
+            }
+        }
+
+        void Directolor::sendJoin()
+        {
+            // Existing sendJoin() implementation
+            ESP_LOGD("directolor", "Sending join signal");
+            // ... (RF signal code using NRF24L01+)
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)

@@ -1,6 +1,7 @@
 #pragma once
 #include "esphome/core/component.h"
 #include "esphome/components/cover/cover.h"
+#include "esphome/components/switch/switch.h"
 #include "esphome/components/nrf24l01_base/nrf24l01_base.h" // Include the base component
 #include <CRC.h>
 
@@ -45,8 +46,9 @@ namespace esphome
       void control(const cover::CoverCall &call) override;
       void setup() override;
       void loop() override;
-      
-      void do_join();
+
+      void sendJoin();
+      void on_join_switch_state(bool state);
 
     protected:
       esphome::nrf24l01_base::Nrf24l01_base *base_;
@@ -65,7 +67,7 @@ namespace esphome
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
 
-      
+      esphome::switch_::Switch *join_switch_ = nullptr;
     };
 
   } // namespace directolor_cover
