@@ -10,7 +10,7 @@ void EmptyButton::setup() {
 
 }
 
-void EmptyButton::press() {
+void EmptyButton::press_action() {
 }
 
 void EmptyButton::dump_config(){
