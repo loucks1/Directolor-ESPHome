@@ -1,6 +1,7 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
 #include "esphome.h"
+#include <string>
 
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
 
@@ -72,7 +73,7 @@ namespace esphome
 
             ESP_LOGCONFIG(TAG, (this->get_name() + " Join LOG LOG LOG").c_str()); 
 
-            string name = this->get_name() + "JOIN";
+            std::string button_name = this->get_name() + " JOIN";
 
             join_button_ = new JoinButton(this);
             join_button_->set_name(name);
