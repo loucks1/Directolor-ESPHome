@@ -1,2 +1,1 @@
-import esphome.codegen as cg
-cg.require_component("button")
+import esphome.components.button as button
