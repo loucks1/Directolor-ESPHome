@@ -79,7 +79,7 @@ namespace esphome
             TEST = "updated MY NAME  MUCH LONGER NOWf asfafdsafdas";
                     
             join_button_ = new JoinButton(this);
-            join_button_->set_name(TEST->c_str()d);
+            join_button_->set_name(TEST.c_str()d);
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(join_button_);
