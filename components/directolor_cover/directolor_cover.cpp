@@ -1,7 +1,6 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
 
-
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
 
 namespace esphome
@@ -63,12 +62,35 @@ namespace esphome
             this->command_random_ = random(256);
 
             // Initialize and register the join switch
-            join_switch_ = new esphome::switch_::Switch();
+            join_switch_ = new JoinSwitch(this);
             join_switch_->set_name("Directolor Join Mode");
             join_switch_->add_on_state_callback([this](bool state)
                                                 { this->on_join_switch_state(state); });
-            App.register_switch(join_switch_);
+            esphome::App.register_switch(join_switch_);
         }
+
+        void DirectolorCover::JoinSwitch::write_state(bool state) {
+            // Update switch state
+            this->publish_state(state);
+            // Notify parent of state change
+            this->parent_->on_join_switch_state(state);
+          }
+          
+          void DirectolorCover::on_join_switch_state(bool state) {
+            if (state) {
+              ESP_LOGD("directolor_cover", "Join Mode(enabled - sending join signal");
+              sendJoin();
+            } else {
+              ESP_LOGD("directolor_cover", "Join Mode disabled");
+              // Optional: Add reset logic if needed
+            }
+          }
+          
+          void DirectolorCover::sendJoin() {
+            // Existing sendJoin() implementation
+            ESP_LOGD("directolor_cover", "Sending join signal");
+            // ... (RF signal code using NRF24L01+)
+          }
 
         void DirectolorCover::control(const cover::CoverCall &call)
         {

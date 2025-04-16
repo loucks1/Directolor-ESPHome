@@ -64,7 +64,17 @@ namespace esphome
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
 
-      esphome::switch_::Switch *join_switch_ = nullptr;
+      class JoinSwitch : public switch_::Switch {
+        public:
+         JoinSwitch(DirectolorCover* parent) : parent_(parent) {}
+         void write_state(bool state) override;
+     
+        private:
+         DirectolorCover* parent_;
+       };
+
+      JoinSwitch* *join_switch_ = nullptr;
+      void on_join_switch_state(bool state);
     };
 
   } // namespace directolor_cover
