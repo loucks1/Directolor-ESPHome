@@ -72,8 +72,10 @@ namespace esphome
 
             ESP_LOGCONFIG(TAG, (this->get_name() + " Join LOG LOG LOG").c_str()); 
 
+            string name = this->get_name() + "JOIN";
+
             join_button_ = new JoinButton(this);
-            join_button_->set_name("Upper Shades Join Button");
+            join_button_->set_name(name);
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(join_button_);
