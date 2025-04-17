@@ -101,18 +101,23 @@ namespace esphome
         {
             if (id.compare(0, strlen(DUPLICATE_TEXT), DUPLICATE_TEXT) == 0)
             {
-                // Handle "open" action
-                ESP_LOGD(TAG, "Dup...");
+                this->issue_shade_command(directolor_duplicate, DIRECTOLOR_CODE_ATTEMPTS);
             }
             else if (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
             {
-                // Handle "close" action
-                ESP_LOGD(TAG, "Join...");
+                this->issue_shade_command(directolor_join, DIRECTOLOR_CODE_ATTEMPTS);
             }
             else if (id.compare(0, strlen(REMOVE_TEXT), REMOVE_TEXT) == 0)
             {
-                // Handle "stop" action
-                ESP_LOGD(TAG, "remove...");
+                this->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS);
+            }
+            else if (id.compare(0, strlen(SET_FAVORITE_TEXT), SET_FAVORITE_TEXT) == 0)
+            {
+                this->issue_shade_command(directolor_setFav, DIRECTOLOR_CODE_ATTEMPTS);
+            }
+            else if (id.compare(0, strlen(TO_FAVORITE_TEXT), TO_FAVORITE_TEXT) == 0)
+            {
+                this->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
             }
             else
             {
@@ -224,6 +229,103 @@ namespace esphome
             this->outstanding_send_attempts_ = copies;
         }
 
+        static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
+
+        int DirectolorCover::getDuplicateRadioCommand(byte *payload, BlindAction blind_action)
+        {
+            const uint8_t offset = 0;
+            int payloadOffset = 0;
+            // int uniqueBytesOffset = i * DUPLICATE_CODE_UNIQUE_BYTES;
+            for (int j = 0; j < sizeof(duplicatePrototype); j++)
+            {
+                switch (j) // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
+                {
+                case 6 + offset:
+                    payload[payloadOffset + j] = command_random_++;
+                    break;
+                case 9 + offset:
+                    payload[payloadOffset + j] = 0x06;
+                    break;
+                case 10 + offset:
+                    payload[payloadOffset + j] = 0x03;
+                    break;
+                case 11 + offset:
+                    payload[payloadOffset + j] = 0x20;
+                    break;
+                case 12 + offset:
+                    payload[payloadOffset + j] = 0x05;
+                    break;
+                case 13 + offset:
+                    payload[payloadOffset + j] = 0x12;
+                    break;
+                case 14 + offset:
+                    payload[payloadOffset + j] = 0x03;
+                    break;
+                case 15 + offset:
+                    payload[payloadOffset + j] = 0xAC;
+                    break;
+                case 16 + offset:
+                    payload[payloadOffset + j] = 0x56;
+                    break;
+                case 17 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[1];
+                    break;
+                case 18 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[0];
+                    break;
+                case 19 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[2];
+                    break;
+                case 20 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[3];
+                    break;
+                default:
+                    payload[payloadOffset + j] = duplicatePrototype[j];
+                    break;
+                }
+            }
+            return sizeof(duplicatePrototype);
+        }
+
+        static constexpr uint8_t groupPrototype[] = {0X11, 0X11, 0xC0, 0X0A, 0X40, 0X05, 0X18, 0XFF, 0XFF, 0X8A, 0X91, 0X08, 0X03, 0X01}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
+
+        int DirectolorCover::get_group_radio_command(byte *payload, BlindAction blind_action)
+        {
+            const uint8_t offset = 0;
+            int payloadOffset = 0;
+            for (int j = 0; j < sizeof(groupPrototype); j++)
+            {
+                switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
+                {
+                case 0 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[0];
+                    break;
+                case 1 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[1];
+                    break;
+                case 6 + offset:
+                    payload[payloadOffset + j] = command_random_++;
+                    break;
+                case 9 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[2];
+                    break;
+                case 10 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[3];
+                    break;
+                case 12 + offset:
+                    payload[payloadOffset + j] = this->channel_;
+                    break;
+                case 13 + offset:
+                    payload[payloadOffset + j] = blind_action;
+                    break;
+                default:
+                    payload[payloadOffset + j] = groupPrototype[j];
+                    break;
+                }
+            }
+            return sizeof(groupPrototype);
+        }
+
         static constexpr uint8_t commandPrototype[] = {0X11, 0X11, 0xC0, 0X10, 0X00, 0X05, 0XBC, 0XFF, 0XFF, 0X8A, 0X91, 0X86, 0X06, 0X99, 0X01, 0X00, 0X8A, 0X91, 0X52, 0X53, 0X00};
 
         int DirectolorCover::get_radio_command(byte *payload, BlindAction blind_action)
@@ -232,11 +334,9 @@ namespace esphome
             {
             case directolor_join:
             case directolor_remove:
-                return 0;
-            // return getGroupRadioCommand(payload, commandItem);
+                return get_group_radio_command(payload, blind_action);
             case directolor_duplicate:
-                return 0;
-                // return getDuplicateRadioCommand(payload, commandItem);
+                return getDuplicateRadioCommand(payload, commandItem);
             }
             const uint8_t offset = 0;
             int payloadOffset = 0;

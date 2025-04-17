@@ -53,6 +53,8 @@ namespace esphome
     protected:
       esphome::nrf24l01_base::Nrf24l01_base *base_;
       int get_radio_command(byte *payload, BlindAction blind_action);
+      int get_group_radio_command(byte *payload, BlindAction blind_action);
+      int getDuplicateRadioCommand(byte *payload, BlindAction blind_action);
       void issue_shade_command(BlindAction blind_action, int copies);
       uint8_t radio_code_[4];
       byte command_random_;
@@ -73,13 +75,14 @@ namespace esphome
       {
       public:
         // Updated constructor to accept name and id
-        ActionButton(DirectolorCover *parent, const std::string &action) 
-            : parent_(parent) {
-              this->name = std::string(parent->get_name().c_str()) + " " + action;
-              this->id = action + "_" + std::string(parent->get_name().c_str());
-              this->set_name(this->name.c_str());
-              this->set_object_id(this->id.c_str());
-            }
+        ActionButton(DirectolorCover *parent, const std::string &action)
+            : parent_(parent)
+        {
+          this->name = std::string(parent->get_name().c_str()) + " " + action;
+          this->id = action + "_" + std::string(parent->get_name().c_str());
+          this->set_name(this->name.c_str());
+          this->set_object_id(this->id.c_str());
+        }
         void press_action() override;
 
       protected:
@@ -97,8 +100,6 @@ namespace esphome
       ActionButton *set_fav_button_ = nullptr;
       void on_action_button_press(std::string &id);
     };
-
-    
 
   } // namespace directolor_cover
 } // namespace esphome
