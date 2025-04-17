@@ -74,12 +74,14 @@ namespace esphome
             this->remove_button_ = new ActionButton(this, "Remove");
             App.register_button(this->remove_button_);
 
-            this->to_fav_button_ = new ActionButton(this, "To Favorite");
-            App.register_button(this->to_fav_button_);
+            if (this->favorite_support_)
+            {
+                this->to_fav_button_ = new ActionButton(this, "To Favorite");
+                App.register_button(this->to_fav_button_);
 
-            this->set_fav_button_ = new ActionButton(this, "Set Favorite");
-            App.register_button(this->set_fav_button_);
-
+                this->set_fav_button_ = new ActionButton(this, "Set Favorite");
+                App.register_button(this->set_fav_button_);
+            }
         }
 
         void DirectolorCover::ActionButton::press_action()
