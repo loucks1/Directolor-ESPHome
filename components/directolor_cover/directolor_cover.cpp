@@ -66,7 +66,7 @@ namespace esphome
             // Initialize and register the join switch
 
             this->duplicate_button_ = new ActionButton(this, "Duplicate");
-            App.register_button(this->remove_button_);
+            App.register_button(this->duplicate_button_);
 
             this->join_button_ = new ActionButton(this, "Join");
             App.register_button(this->join_button_);
@@ -75,10 +75,10 @@ namespace esphome
             App.register_button(this->remove_button_);
 
             this->to_fav_button_ = new ActionButton(this, "To Favorite");
-            App.register_button(this->remove_button_);
+            App.register_button(this->to_fav_button_);
 
             this->set_fav_button_ = new ActionButton(this, "Set Favorite");
-            App.register_button(this->remove_button_);
+            App.register_button(this->set_fav_button_);
 
         }
 
