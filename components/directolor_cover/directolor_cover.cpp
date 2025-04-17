@@ -66,13 +66,9 @@ namespace esphome
             // Initialize and register the join switch
 
             this->join_button_ = new ActionButton(this, "Join");
-            // this->join_button_->add_on_press_callback([this]() { this->on_action_button_press(); });
-
             App.register_button(this->join_button_);
 
             this->remove_button_ = new ActionButton(this, "Remove");
-            // this->remove_button_->add_on_press_callback([this]() { this->on_action_button_press(); });
-
             App.register_button(this->remove_button_);
         }
 
