@@ -1,7 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import cover
-from esphome.components import button
 from esphome.const import CONF_ID
 from ..nrf24l01_base import nrf24l01  # This imports esphome::nrf24l01_base::Nrf24l01_base
 
