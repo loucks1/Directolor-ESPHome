@@ -104,7 +104,7 @@ namespace esphome
                 // Handle "open" action
                 ESP_LOGD(TAG, "Dup...");
             }
-            else (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
+            else if (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
             {
                 // Handle "close" action
                 ESP_LOGD(TAG, "Join...");
