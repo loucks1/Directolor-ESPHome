@@ -336,7 +336,7 @@ namespace esphome
             case directolor_remove:
                 return get_group_radio_command(payload, blind_action);
             case directolor_duplicate:
-                return getDuplicateRadioCommand(payload, commandItem);
+                return getDuplicateRadioCommand(payload, blind_action);
             }
             const uint8_t offset = 0;
             int payloadOffset = 0;
