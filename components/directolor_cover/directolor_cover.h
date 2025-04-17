@@ -69,9 +69,18 @@ namespace esphome
       class JoinButton : public button::Button
       {
       public:
-        JoinButton(DirectolorCover *parent) : parent_(parent) {}
+        // Updated constructor to accept name and id
+        JoinButton(DirectolorCover *parent, const std::string &name, const std::string &id) 
+            : parent_(parent), name(name), id(id) {
+              this->set_name(this->name);
+              this->set_object_id(this->id);
+            }
         void press_action() override;
-  
+
+      protected:
+        std::string name;
+        std::string id;
+
       private:
         DirectolorCover *parent_;
       };

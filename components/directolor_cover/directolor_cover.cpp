@@ -73,16 +73,12 @@ namespace esphome
 
             TEST[i] = this->get_name() + " JOIN";
                     
-            this->join_button_ = new JoinButton(this);
-            this->join_button_->set_object_id(NAME1);
-            this->join_button_->set_name(TEST[i++].c_str());
+            this->join_button_ = new JoinButton(this, "test_name", "test_id1");
             this->join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(this->join_button_);
 
-            this->other_button_ = new JoinButton(this);
-            this->other_button_->set_object_id(NAME2);
-            this->other_button_->set_name("Other button");
+            this->other_button_ = new JoinButton(this, "test_name2", "test_id2");
             this->other_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(this->other_button_);
