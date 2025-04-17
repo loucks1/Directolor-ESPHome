@@ -1,3 +1,6 @@
+defaults:
+  program_support: "true"
+
 cover:
   - platform: directolor_cover
     base: nrf24l01
