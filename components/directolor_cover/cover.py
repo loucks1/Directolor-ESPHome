@@ -4,7 +4,7 @@ from esphome.components import cover
 from esphome.const import CONF_ID
 from ..nrf24l01_base import nrf24l01  # This imports esphome::nrf24l01_base::Nrf24l01_base
 
-DEPENDENCIES = ["nrf24l01_base"]
+DEPENDENCIES = ["nrf24l01_base", "button"]
 
 # Define the namespace and class for DirectolorCover
 directolor_cover_ns = cg.esphome_ns.namespace("directolor_cover")
