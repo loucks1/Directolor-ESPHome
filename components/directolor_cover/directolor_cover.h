@@ -77,21 +77,8 @@ namespace esphome
         DirectolorCover *parent_;
       };
 
-      class JoinSwitch : public switch_::Switch
-      {
-      public:
-        JoinSwitch(DirectolorCover *parent) : parent_(parent) {}
-        void write_state(bool state) override;
-
-      private:
-        DirectolorCover *parent_;
-      };
-
       JoinButton *join_button_ = nullptr;
       void on_join_button_press();
-
-      JoinSwitch *join_switch_ = nullptr;
-      void on_join_switch_state(bool state);
     };
 
   } // namespace directolor_cover

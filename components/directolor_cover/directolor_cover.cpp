@@ -66,14 +66,6 @@ namespace esphome
             this->command_random_ = random(256);
 
             // Initialize and register the join switch
-            join_switch_ = new JoinSwitch(this);
-            join_switch_->set_name("Directolor Join Mode");
-            join_switch_->add_on_state_callback([this](bool state)
-                                                { this->on_join_switch_state(state); });
-            App.register_switch(join_switch_);
-
-            ESP_LOGCONFIG(TAG, (this->get_name() + " Join LOG LOG LOG").c_str()); 
-
             std::string button_name = this->get_name() + " JOIN";
 
             TEST = this->get_name() + " JOIN";
@@ -95,13 +87,6 @@ namespace esphome
             ESP_LOGD(TAG, "Join button pressed");
         }
 
-        void DirectolorCover::JoinSwitch::write_state(bool state)
-        {
-            // Update switch state
-            this->publish_state(state);
-            // Notify parent of state change
-            this->parent_->on_join_switch_state(state);
-        }
 
         void DirectolorCover::on_join_switch_state(bool state)
         {
