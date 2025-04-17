@@ -65,23 +65,23 @@ namespace esphome
 
             // Initialize and register the join switch
 
-            this->join_button_ = new JoinButton(this, "test_name", "test_id1");
-            this->join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
+            this->join_button_ = new ActionButton(this, "Join");
+            this->join_button_->add_on_press_callback([this]() { this->on_action_button_press(); });
 
             App.register_button(this->join_button_);
 
-            this->other_button_ = new JoinButton(this, "test_name2", "test_id2");
-            this->other_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
+            this->remove_button_ = new ActionButton(this, "Remove");
+            this->remove_button_->add_on_press_callback([this]() { this->on_action_button_press(); });
 
-            App.register_button(this->other_button_);
+            App.register_button(this->remove_button_);
         }
 
-        void DirectolorCover::JoinButton::press_action()
+        void DirectolorCover::ActionButton::press_action()
         {
-            this->parent_->on_join_button_press();
+            this->parent_->on_action_button_press();
         }
 
-        void DirectolorCover::on_join_button_press()
+        void DirectolorCover::on_action_button_press()
         {
             ESP_LOGD(TAG, "Join button pressed");
         }

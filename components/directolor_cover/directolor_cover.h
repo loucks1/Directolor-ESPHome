@@ -65,12 +65,14 @@ namespace esphome
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
 
-      class JoinButton : public button::Button
+      class ActionButton : public button::Button
       {
       public:
         // Updated constructor to accept name and id
-        JoinButton(DirectolorCover *parent, const std::string &name, const std::string &id) 
-            : parent_(parent), name(name), id(id) {
+        ActionButton(DirectolorCover *parent, const std::string &action) 
+            : parent_(parent) {
+              this->name = parent.get_name() + " " + action;
+              this->id = action + "_" + parent.get_name();
               this->set_name(this->name.c_str());
               this->set_object_id(this->id.c_str());
             }
@@ -84,9 +86,9 @@ namespace esphome
         DirectolorCover *parent_;
       };
 
-      JoinButton *join_button_ = nullptr;
-      JoinButton *other_button_ = nullptr;
-      void on_join_button_press();
+      ActionButton *join_button_ = nullptr;
+      ActionButton *remove_button_ = nullptr;
+      void on_action_button_press();
     };
 
     
