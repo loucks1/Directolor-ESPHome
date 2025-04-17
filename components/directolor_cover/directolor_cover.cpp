@@ -10,7 +10,8 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
-        std::string TEST = "HERE IS MY NAME";
+        std::string[100] TEST = "HERE IS MY NAME";
+        static int i = 0;
 
         void DirectolorCover::dump_config()
         {
@@ -68,10 +69,10 @@ namespace esphome
             // Initialize and register the join switch
             std::string button_name = this->get_name() + " JOIN";
 
-            TEST = this->get_name() + " JOIN";
+            TEST[i] = this->get_name() + " JOIN";
                     
             join_button_ = new JoinButton(this);
-            join_button_->set_name(TEST.c_str());
+            join_button_->set_name(TEST[i++].c_str());
             join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(join_button_);
