@@ -9,7 +9,7 @@ cover:
       - ${radio_code3}
       - ${radio_code4}
     movement_duration: ${movement_duration}
-    channel: 2
-    tilt_supported: true
-    favorite_support: true
-#   program_support: false 
+    channel: ${channel}
+    tilt_supported: ${tilt_supported}
+    favorite_support: ${favorite_support}
+    program_support: ${program_support}
