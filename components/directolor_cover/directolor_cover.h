@@ -71,8 +71,8 @@ namespace esphome
         // Updated constructor to accept name and id
         ActionButton(DirectolorCover *parent, const std::string &action) 
             : parent_(parent) {
-              this->name = parent.get_name() + " " + action;
-              this->id = action + "_" + parent.get_name();
+              this->name = parent->get_name() + " " + action;
+              this->id = action + "_" + parent->get_name();
               this->set_name(this->name.c_str());
               this->set_object_id(this->id.c_str());
             }
