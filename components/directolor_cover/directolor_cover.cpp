@@ -383,7 +383,7 @@ namespace esphome
                 j++;
             }
 
-            return sizeof(commandPrototype) + payloadOffset;
+            return sizeof(setFavPrototype) + payloadOffset;
         }
 
         static constexpr uint8_t commandPrototype[] = {0X11, 0X11, 0xC0, 0X10, 0X00, 0X05, 0XBC, 0XFF, 0XFF, 0X8A, 0X91, 0X86, 0X06, 0X99, 0X01, 0X00, 0X8A, 0X91, 0X52, 0X53, 0X00};
