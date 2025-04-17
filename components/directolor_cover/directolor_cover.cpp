@@ -83,7 +83,7 @@ namespace esphome
 
         void DirectolorCover::on_action_button_press()
         {
-            ESP_LOGD(TAG, "Action button pressed");
+            ESP_LOGD(TAG, "Action button pressed '%s'", this->get_id().c_str());
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
