@@ -54,7 +54,8 @@ namespace esphome
       esphome::nrf24l01_base::Nrf24l01_base *base_;
       int get_radio_command(byte *payload, BlindAction blind_action);
       int get_group_radio_command(byte *payload, BlindAction blind_action);
-      int getDuplicateRadioCommand(byte *payload, BlindAction blind_action);
+      int get_duplicate_radio_command(byte *payload, BlindAction blind_action);
+      int get_set_fav_radio_command(payload, blind_action);
       void issue_shade_command(BlindAction blind_action, int copies);
       uint8_t radio_code_[4];
       byte command_random_;
