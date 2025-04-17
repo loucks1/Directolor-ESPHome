@@ -26,6 +26,16 @@ namespace esphome
       directolor_duplicate = 4
     };
 
+    class JoinButton : public button::Button
+      {
+      public:
+        JoinButton(DirectolorCover *parent) : parent_(parent) {}
+        void press_action() override;
+
+      private:
+        DirectolorCover *parent_;
+      };
+
     class DirectolorCover : public cover::Cover, public Component
     {
     public:
@@ -65,16 +75,6 @@ namespace esphome
 
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
-
-      class JoinButton : public button::Button
-      {
-      public:
-        JoinButton(DirectolorCover *parent) : parent_(parent) {}
-        void press_action() override;
-
-      private:
-        DirectolorCover *parent_;
-      };
 
       JoinButton *join_button_ = nullptr;
       JoinButton *other_button_ = nullptr;
