@@ -1,7 +1,6 @@
 #pragma once
 #include "esphome.h"
 #include "esphome/core/component.h"
-#include "esphome/components/cover/cover.h"
 #include "esphome/components/nrf24l01_base/nrf24l01_base.h" // Include the base component
 #include <CRC.h>
 
