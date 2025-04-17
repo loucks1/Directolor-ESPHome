@@ -99,17 +99,17 @@ namespace esphome
 
         void DirectolorCover::on_action_button_press(std::string &id)
         {
-            if (id.compare(0, DUPLICATE_TEXT.length(), DUPLICATE_TEXT) == 0)
+            if (id.compare(0, strlen(DUPLICATE_TEXT), DUPLICATE_TEXT) == 0)
             {
                 // Handle "open" action
                 ESP_LOGD(TAG, "Dup...");
             }
-            else (id.compare(0, JOIN_TEXT.length(), JOIN_TEXT) == 0)
+            else (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
             {
                 // Handle "close" action
                 ESP_LOGD(TAG, "Join...");
             }
-            else if (id.compare(0, REMOVE_TEXT.length(), REMOVE_TEXT) == 0)
+            else if (id.compare(0, strlen(REMOVE_TEXT), REMOVE_TEXT) == 0)
             {
                 // Handle "stop" action
                 ESP_LOGD(TAG, "remove...");
