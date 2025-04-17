@@ -72,8 +72,8 @@ namespace esphome
         // Updated constructor to accept name and id
         JoinButton(DirectolorCover *parent, const std::string &name, const std::string &id) 
             : parent_(parent), name(name), id(id) {
-              this->set_name(this->name);
-              this->set_object_id(this->id);
+              this->set_name(this->name.c_str());
+              this->set_object_id(this->id.c_str());
             }
         void press_action() override;
 
