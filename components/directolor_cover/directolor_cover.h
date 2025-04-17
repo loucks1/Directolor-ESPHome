@@ -88,7 +88,7 @@ namespace esphome
 
       ActionButton *join_button_ = nullptr;
       ActionButton *remove_button_ = nullptr;
-      void on_action_button_press();
+      void on_action_button_press(std::string &id);
     };
 
     
