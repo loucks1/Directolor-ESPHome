@@ -66,7 +66,7 @@ namespace esphome
             // Initialize and register the join switch
 
             this->join_button_ = new ActionButton(this, "Join");
-            this->join_button_->add_on_press_callback([this]() { this->on_action_button_press(); });
+            // this->join_button_->add_on_press_callback([this]() { this->on_action_button_press(); });
 
             App.register_button(this->join_button_);
 
@@ -83,7 +83,7 @@ namespace esphome
 
         void DirectolorCover::on_action_button_press()
         {
-            ESP_LOGD(TAG, "Action button pressed '%s'", this->get_name().c_str());
+            ESP_LOGD(TAG, "Action button pressed '%s'", this->id().c_str());
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
