@@ -87,21 +87,6 @@ namespace esphome
             ESP_LOGD(TAG, "Join button pressed");
         }
 
-
-        void DirectolorCover::on_join_switch_state(bool state)
-        {
-            if (state)
-            {
-                ESP_LOGD("directolor_cover", "Join Mode enabled - sending join signal");
-                this->sendJoin();
-            }
-            else
-            {
-                ESP_LOGD("directolor_cover", "Join Mode disabled");
-                // Optional: Add reset logic if needed
-            }
-        }
-
         void DirectolorCover::sendJoin()
         {
             ESP_LOGD("directolor_cover", "Sending join signal");
