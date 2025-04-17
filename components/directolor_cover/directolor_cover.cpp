@@ -11,6 +11,12 @@ namespace esphome
     {
         static const char *TAG = "directolor_cover";
 
+        static const char *DUPLICATE_TEXT = "Duplicate";
+        static const char *JOIN_TEXT = "Join";
+        static const char *REMOVE_TEXT = "Remove";
+        static const char *SET_FAVORITE_TEXT = "Set Favorite";
+        static const char *TO_FAVORITE_TEXT = "To Favorite";
+
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
@@ -66,22 +72,22 @@ namespace esphome
             // Initialize and register the join switch
             if (this->program_function_support_)
             {
-                this->duplicate_button_ = new ActionButton(this, "Duplicate");
+                this->duplicate_button_ = new ActionButton(this, DUPLICATE_TEXT);
                 App.register_button(this->duplicate_button_);
 
-                this->join_button_ = new ActionButton(this, "Join");
+                this->join_button_ = new ActionButton(this, JOIN_TEXT);
                 App.register_button(this->join_button_);
 
-                this->remove_button_ = new ActionButton(this, "Remove");
+                this->remove_button_ = new ActionButton(this, REMOVE_TEXT);
                 App.register_button(this->remove_button_);
             }
 
             if (this->favorite_support_)
             {
-                this->set_fav_button_ = new ActionButton(this, "Set Favorite");
+                this->set_fav_button_ = new ActionButton(this, SET_FAVORITE_TEXT);
                 App.register_button(this->set_fav_button_);
 
-                this->to_fav_button_ = new ActionButton(this, "To Favorite");
+                this->to_fav_button_ = new ActionButton(this, TO_FAVORITE_TEXT);
                 App.register_button(this->to_fav_button_);
             }
         }
@@ -93,7 +99,26 @@ namespace esphome
 
         void DirectolorCover::on_action_button_press(std::string &id)
         {
-            ESP_LOGD(TAG, "Action button pressed '%s' - %s", this->get_name().c_str(), id.c_str());
+            if (id.starts_with(DUPLICATE_TEXT))
+            {
+                // Handle "open" action
+                ESP_LOGD(TAG, "Dup...");
+            }
+            else if (id.starts_with(JOIN_TEXT))
+            {
+                // Handle "close" action
+                ESP_LOGD(TAG, "Join...");
+            }
+            else if (id.starts_with(REMOVE_TEXT))
+            {
+                // Handle "stop" action
+                ESP_LOGD(TAG, "remove...");
+            }
+            else
+            {
+                // Handle unknown action
+                ESP_LOGD(TAG, "Unknown action: %s", id.c_str());
+            }
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
