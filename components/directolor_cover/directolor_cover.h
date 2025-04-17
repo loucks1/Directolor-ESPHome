@@ -39,7 +39,7 @@ namespace esphome
       void set_movement_duration(float seconds) { this->movement_duration_ms_ = static_cast<uint32_t>(seconds * 1000.0f); }
       void set_tilt_supported(bool tilt_support) { this->tilt_supported_ = tilt_support; }
       void set_channel(int channel) { this->channel_ = channel; }
-      void set_tilt_supported(bool favorite_enabled) { this->favorite_support_ = favorite_enabled; }
+      void set_favorite_support(bool favorite_enabled) { this->favorite_support_ = favorite_enabled; }
 
       void dump_config() override;
       cover::CoverTraits get_traits() override;
