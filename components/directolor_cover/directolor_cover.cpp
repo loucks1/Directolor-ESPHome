@@ -76,14 +76,9 @@ namespace esphome
             App.register_button(this->remove_button_);
         }
 
-        void DirectolorCover::ActionButton::press_action()
-        {
-            this->parent_->on_action_button_press();
-        }
-
         void DirectolorCover::on_action_button_press()
         {
-            ESP_LOGD(TAG, "Join button pressed");
+            ESP_LOGD(TAG, "Action button pressed");
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
