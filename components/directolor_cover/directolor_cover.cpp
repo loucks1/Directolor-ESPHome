@@ -333,9 +333,9 @@ namespace esphome
             return sizeof(groupPrototype);
         }
 
-        static constexpr uint8_t setFavPrototype[] = {0x0F, 0x00, 0x05, 0x05, 0xFF, 0xFF, 0xB0, 0x51, 0x86, 0x04, 0x2F, 0xB0, 0x51, 0x63, 0x49, 0x00, 0x97, 0x03, 0xAA };
+        static constexpr uint8_t setFavPrototype[] = {0x0F, 0x00, 0x05, 0x05, 0xFF, 0xFF, 0xB0, 0x51, 0x86, 0x04, 0x2F, 0xB0, 0x51, 0x63, 0x49, 0x00, 0x97, 0x03, 0xAA};
 
-        int DirectolorCover::get_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorCover::get_set_fav_radio_command(byte *payload, BlindAction blind_action)
         {
             const uint8_t offset = 0;
             int payloadOffset = 0;
@@ -377,7 +377,7 @@ namespace esphome
                     payload[payloadOffset + j] = blind_action;
                     break;
                 default:
-                    payload[payloadOffset + j] = commandPrototype[j];
+                    payload[payloadOffset + j] = setFavPrototype[j];
                     break;
                 }
                 j++;
