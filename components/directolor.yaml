@@ -1,0 +1,15 @@
+cover:
+  - platform: directolor_cover
+    base: nrf24l01
+    id: upper_shades_2
+    name: Upper Shades 2
+    radio_code:   #0B 60 B0 05
+      - 0x0B
+      - 0x65
+      - 0xB0
+      - 0x51
+    movement_duration: 16s
+    channel: 2
+    tilt_supported: true
+    favorite_support: true
+#   program_support: false 
