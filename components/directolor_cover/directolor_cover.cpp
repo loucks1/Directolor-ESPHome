@@ -10,6 +10,8 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
+        static const char *NAME1 = "name_1";
+        static const char *NAME2 = "name_2";
         std::string TEST[100];
         static int i = 0;
 
@@ -72,14 +74,14 @@ namespace esphome
             TEST[i] = this->get_name() + " JOIN";
                     
             this->join_button_ = new JoinButton(this);
+            this->join_button_->set_object_id(NAME1);
             this->join_button_->set_name(TEST[i++].c_str());
-            this->join_button_->set_object_id("test1".c_str());
             this->join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(this->join_button_);
 
             this->other_button_ = new JoinButton(this);
-            this->other_button_->set_object_id("test2".c_str());
+            this->other_button_->set_object_id(NAME2);
             this->other_button_->set_name("Other button");
             this->other_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
