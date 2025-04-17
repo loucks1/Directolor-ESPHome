@@ -31,6 +31,7 @@ CONFIG_SCHEMA = cover.COVER_SCHEMA.extend({
     cv.Required("channel"): cv.int_range(min=1, max=63),  # Required channel 1-6
     cv.Optional("tilt_supported", default=False): cv.boolean,  # Optional tilt support, defaults to false
     cv.Optional("favorite_support", default=False): cv.boolean,
+    cv.Optional("program_support", default=True): cv.boolean,
 }).extend(cv.COMPONENT_SCHEMA)
 
 # Generate C++ code
@@ -45,3 +46,4 @@ async def to_code(config):
     cg.add(var.set_tilt_supported(config["tilt_supported"]))
     cg.add(var.set_channel(config["channel"]))
     cg.add(var.set_favorite_support(config["favorite_support"]))
+    cg.add(var.set_program_function_support(config["program_support"]))

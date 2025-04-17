@@ -40,6 +40,7 @@ namespace esphome
       void set_tilt_supported(bool tilt_support) { this->tilt_supported_ = tilt_support; }
       void set_channel(int channel) { this->channel_ = channel; }
       void set_favorite_support(bool favorite_enabled) { this->favorite_support_ = favorite_enabled; }
+      void set_program_function_support(bool program_function_support) { this->program_function_support_ = program_function_support; }
 
       void dump_config() override;
       cover::CoverTraits get_traits() override;
@@ -59,6 +60,7 @@ namespace esphome
       bool tilt_supported_ = false;
       uint8_t channel_;
       bool favorite_support_ = false;
+      bool program_function_support_ = true;
 
       BlindAction current_action_;
       int8_t outstanding_send_attempts_ = 0;

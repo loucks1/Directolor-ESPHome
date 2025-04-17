@@ -64,15 +64,17 @@ namespace esphome
             this->command_random_ = random(256);
 
             // Initialize and register the join switch
+            if (this->program_function_support_)
+            {
+                this->duplicate_button_ = new ActionButton(this, "Duplicate");
+                App.register_button(this->duplicate_button_);
 
-            this->duplicate_button_ = new ActionButton(this, "Duplicate");
-            App.register_button(this->duplicate_button_);
+                this->join_button_ = new ActionButton(this, "Join");
+                App.register_button(this->join_button_);
 
-            this->join_button_ = new ActionButton(this, "Join");
-            App.register_button(this->join_button_);
-
-            this->remove_button_ = new ActionButton(this, "Remove");
-            App.register_button(this->remove_button_);
+                this->remove_button_ = new ActionButton(this, "Remove");
+                App.register_button(this->remove_button_);
+            }
 
             if (this->favorite_support_)
             {
