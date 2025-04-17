@@ -73,16 +73,17 @@ namespace esphome
                     
             this->join_button_ = new JoinButton(this);
             this->join_button_->set_name(TEST[i++].c_str());
+            this->join_button_->set_object_id("test1".c_str());
             this->join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(this->join_button_);
 
             this->other_button_ = new JoinButton(this);
+            this->other_button_->set_object_id("test2".c_str());
             this->other_button_->set_name("Other button");
             this->other_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
             App.register_button(this->other_button_);
-
         }
 
         void DirectolorCover::JoinButton::press_action()
