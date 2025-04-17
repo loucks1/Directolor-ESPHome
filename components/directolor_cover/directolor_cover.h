@@ -77,6 +77,7 @@ namespace esphome
       };
 
       JoinButton *join_button_ = nullptr;
+      JoinButton *other_button_ = nullptr;
       void on_join_button_press();
     };
 
