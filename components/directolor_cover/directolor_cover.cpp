@@ -37,10 +37,17 @@ namespace esphome
         {
             if (this->outstanding_send_attempts_ > 0)
             {
+                BlindAction curr_action = this->current_action_;
+
+                if ((curr_action == directolor_join || curr_action == directolor_remove) && (outstanding_send_attempts_ % 2 == 0))
+                {
+                    curr_action = directolor_duplicate;
+                }
+
                 this->outstanding_send_attempts_--;
                 byte payload[MAX_PAYLOAD_SIZE];
 
-                int length = this->get_radio_command(payload, this->current_action_);
+                int length = this->get_radio_command(payload, curr_action);
 
                 uint16_t crc = calcCRC16((uint8_t *)payload, length, 0x755b, 0xFFFF, 0, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
                 payload[length++] = crc >> 8;
@@ -105,11 +112,11 @@ namespace esphome
             }
             else if (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
             {
-                this->issue_shade_command(directolor_join, DIRECTOLOR_CODE_ATTEMPTS);
+                this->issue_shade_command(directolor_join, DIRECTOLOR_CODE_ATTEMPTS * 2);
             }
             else if (id.compare(0, strlen(REMOVE_TEXT), REMOVE_TEXT) == 0)
             {
-                this->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS);
+                this->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS * 2);
             }
             else if (id.compare(0, strlen(SET_FAVORITE_TEXT), SET_FAVORITE_TEXT) == 0)
             {
