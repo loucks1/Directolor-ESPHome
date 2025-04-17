@@ -1,4 +1,11 @@
 defaults:
+  radio_code1: 0X06
+  radio_code2: 0x04
+  radio_code3: 0x05
+  radio_code4: 0x13
+  movement_duration: 0ms
+  tilt_supported: "false"
+  favorite_support: "false"
   program_support: "true"
 
 cover:
