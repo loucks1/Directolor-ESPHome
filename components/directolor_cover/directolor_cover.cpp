@@ -10,7 +10,7 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
-        std::string[100] TEST = "HERE IS MY NAME";
+        std::string TEST[100];
         static int i = 0;
 
         void DirectolorCover::dump_config()
