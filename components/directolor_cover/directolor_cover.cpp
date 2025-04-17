@@ -10,16 +10,11 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
-        static const char *NAME1 = "name_1";
-        static const char *NAME2 = "name_2";
-        std::string TEST[100];
-        static int i = 0;
 
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
             // ESP_LOGCONFIG("directolor.cover", "  Radio Code: 0x%02X, 0x%02X", this->radio_id_, this->command_);
-            ESP_LOGCONFIG(TAG, (this->get_name() + " Join LOG LOG LOG").c_str()); 
         }
 
         cover::CoverTraits DirectolorCover::get_traits()
@@ -69,10 +64,7 @@ namespace esphome
             this->command_random_ = random(256);
 
             // Initialize and register the join switch
-            std::string button_name = this->get_name() + " JOIN";
 
-            TEST[i] = this->get_name() + " JOIN";
-                    
             this->join_button_ = new JoinButton(this, "test_name", "test_id1");
             this->join_button_->add_on_press_callback([this]() { this->on_join_button_press(); });
 
@@ -94,14 +86,6 @@ namespace esphome
             ESP_LOGD(TAG, "Join button pressed");
         }
 
-        void DirectolorCover::sendJoin()
-        {
-            ESP_LOGD("directolor_cover", "Sending join signal");
-            // Placeholder: Implement RF signal sending via NRF24L01+
-            // Example: Send join code (replace with actual code from codes.h or project)
-            // Assuming a method like send_rf_code exists in your class
-            // send_rf_code(JOIN_CODE); // Define JOIN_CODE in codes.h
-        }
         void DirectolorCover::control(const cover::CoverCall &call)
         {
             this->ms_duration_for_delayed_stop_ = 0;
