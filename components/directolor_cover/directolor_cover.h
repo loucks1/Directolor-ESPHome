@@ -86,8 +86,11 @@ namespace esphome
         DirectolorCover *parent_;
       };
 
+      ActionButton *duplicate_button_ = nullptr;
       ActionButton *join_button_ = nullptr;
       ActionButton *remove_button_ = nullptr;
+      ActionButton *to_fav_button_ = nullptr;
+      ActionButton *set_fav_button_ = nullptr;
       void on_action_button_press(std::string &id);
     };
 
