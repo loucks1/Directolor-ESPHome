@@ -37,6 +37,7 @@ namespace esphome
         this->radio_code_[3] = code4;
       }
       void set_channel(int channel) { this->channel_ = channel; }
+      void issue_shade_command(BlindAction blind_action, int copies);
 
       void dump_config() override;
       void setup() override;
@@ -48,7 +49,6 @@ namespace esphome
       int get_group_radio_command(byte *payload, BlindAction blind_action);
       int get_duplicate_radio_command(byte *payload, BlindAction blind_action);
       int get_set_fav_radio_command(byte *payload, BlindAction blind_action);
-      void issue_shade_command(BlindAction blind_action, int copies);
       uint8_t radio_code_[4];
       byte command_random_;
       uint8_t channel_;
