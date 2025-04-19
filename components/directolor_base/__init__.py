@@ -21,8 +21,8 @@ CONFIG_SCHEMA = cv.Schema({
             cv.hex_int_range(min=0, max=255),
         ]),
         cv.Length(min=4, max=4),
-        ),
-        cv.Required("channel"): cv.int_range(min=1, max=6),  # Required channel 1-6
+    ),
+    cv.Required("channel"): cv.int_range(min=1, max=6),  # Required channel 1-6
 }).extend(cv.COMPONENT_SCHEMA)
 
 # Generate C++ code for the component
