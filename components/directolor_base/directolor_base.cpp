@@ -50,14 +50,14 @@ namespace esphome
 
         void DirectolorBase::setup()
         {
-            ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
+           // ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
         }
 
         void DirectolorBase::issue_shade_command(BlindAction blind_action, int copies)
         {
-            ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s, copies=%d",
-                     this->get_name().c_str(), blind_action_to_string(blind_action), copies);
+            // ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s, copies=%d",
+            //          this->get_name().c_str(), blind_action_to_string(blind_action), copies);
             this->current_action_ = blind_action;
             this->outstanding_send_attempts_ = copies;
         }
