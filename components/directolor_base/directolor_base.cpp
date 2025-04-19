@@ -48,6 +48,12 @@ namespace esphome
             }
         }
 
+        void DirectolorBase::issue_command()
+        {
+           // ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
+            issue_shade_command(directolor_stop, DIRECTOLOR_CODE_ATTEMPTS);
+        }
+
         void DirectolorBase::setup()
         {
            // ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());

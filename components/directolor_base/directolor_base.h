@@ -37,7 +37,8 @@ namespace esphome
         this->radio_code_[3] = code4;
       }
       void set_channel(int channel) { this->channel_ = channel; }
-      void issue_shade_command(BlindAction blind_action, int copies);
+
+      void issue_command();
 
       void dump_config() override;
       void setup() override;
@@ -45,13 +46,15 @@ namespace esphome
 
     protected:
       esphome::nrf24l01_base::Nrf24l01_base *base_;
+      uint8_t radio_code_[4];
+      byte command_random_;
+      uint8_t channel_;
+
+      void issue_shade_command(BlindAction blind_action, int copies);
       int get_radio_command(byte *payload, BlindAction blind_action);
       int get_group_radio_command(byte *payload, BlindAction blind_action);
       int get_duplicate_radio_command(byte *payload, BlindAction blind_action);
       int get_set_fav_radio_command(byte *payload, BlindAction blind_action);
-      uint8_t radio_code_[4];
-      byte command_random_;
-      uint8_t channel_;
 
       BlindAction current_action_;
       int8_t outstanding_send_attempts_ = 0;
