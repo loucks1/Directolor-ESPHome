@@ -11,7 +11,8 @@ namespace esphome
 
         void DirectolorBase::dump_config()
         {
-            ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
+            //ESP_LOGCONFIG(TAG, "Directolor Base '%s'", this->name_.c_str());
+            ESP_LOGCONFIG(TAG, "DIRECTOLOR BASE");
             // ESP_LOGCONFIG("directolor.cover", "  Radio Code: 0x%02X, 0x%02X", this->radio_id_, this->command_);
         }
 
