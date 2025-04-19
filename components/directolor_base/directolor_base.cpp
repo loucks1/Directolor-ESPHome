@@ -9,13 +9,13 @@ namespace esphome
     {
         static const char *TAG = "directolor_base";
 
-        void DirectolorCover::dump_config()
+        void DirectolorBase::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
             // ESP_LOGCONFIG("directolor.cover", "  Radio Code: 0x%02X, 0x%02X", this->radio_id_, this->command_);
         }
 
-        void DirectolorCover::loop()
+        void DirectolorBase::loop()
         {
             if (this->outstanding_send_attempts_ > 0)
             {
@@ -47,13 +47,13 @@ namespace esphome
             }
         }
 
-        void DirectolorCover::setup()
+        void DirectolorBase::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
         }
 
-        void DirectolorCover::issue_shade_command(BlindAction blind_action, int copies)
+        void DirectolorBase::issue_shade_command(BlindAction blind_action, int copies)
         {
             ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s, copies=%d",
                      this->get_name().c_str(), blind_action_to_string(blind_action), copies);
@@ -63,7 +63,7 @@ namespace esphome
 
         static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
 
-        int DirectolorCover::get_duplicate_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorBase::get_duplicate_radio_command(byte *payload, BlindAction blind_action)
         {
             const uint8_t offset = 0;
             int payloadOffset = 0;
@@ -121,7 +121,7 @@ namespace esphome
 
         static constexpr uint8_t groupPrototype[] = {0X11, 0X11, 0xC0, 0X0A, 0X40, 0X05, 0X18, 0XFF, 0XFF, 0X8A, 0X91, 0X08, 0X03, 0X01}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
 
-        int DirectolorCover::get_group_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorBase::get_group_radio_command(byte *payload, BlindAction blind_action)
         {
             const uint8_t offset = 0;
             int payloadOffset = 0;
@@ -160,7 +160,7 @@ namespace esphome
 
         static constexpr uint8_t setFavPrototype[] = {0x0F, 0x00, 0x05, 0x05, 0xFF, 0xFF, 0xB0, 0x51, 0x86, 0x04, 0x2F, 0xB0, 0x51, 0x63, 0x49, 0x00, 0x97, 0x03, 0xAA};
 
-        int DirectolorCover::get_set_fav_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorBase::get_set_fav_radio_command(byte *payload, BlindAction blind_action)
         {
             const uint8_t offset = 0;
             int payloadOffset = 0;
@@ -213,7 +213,7 @@ namespace esphome
 
         static constexpr uint8_t commandPrototype[] = {0X11, 0X11, 0xC0, 0X10, 0X00, 0X05, 0XBC, 0XFF, 0XFF, 0X8A, 0X91, 0X86, 0X06, 0X99, 0X01, 0X00, 0X8A, 0X91, 0X52, 0X53, 0X00};
 
-        int DirectolorCover::get_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorBase::get_radio_command(byte *payload, BlindAction blind_action)
         {
             switch (blind_action)
             {
