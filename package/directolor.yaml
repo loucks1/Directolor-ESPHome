@@ -28,4 +28,4 @@ button:
   - platform: template
     name: "Template Button"
     on_press:
-      lambda: upper_shades2.dump_config()
+      lambda: upper_shades_2.dump_config()
