@@ -6,7 +6,7 @@ from ..nrf24l01_base import nrf24l01  # This imports esphome::nrf24l01_base::Nrf
 DEPENDENCIES = ["nrf24l01_base"]
 
 directolor_base_ns = cg.esphome_ns.namespace("directolor_base")
-directolor = directolor_base_ns.class_("Directolor_base", cg.Component)
+directolor = directolor_base_ns.class_("DirectolorBase", cg.Component)
 
 cg.add_library("robtillaart/CRC", None)
 
