@@ -1,36 +1,18 @@
-#include "directolor_cover.h"
+#include "directolor_base.h"
 #include <esphome/core/log.h>
 #include "esphome.h"
 #include <string>
 
-#define MS_FOR_FULL_TILT_MOVEMENT 5000
-
 namespace esphome
 {
-    namespace directolor_cover
+    namespace directolor_base
     {
-        static const char *TAG = "directolor_cover";
-
-        static const char *DUPLICATE_TEXT = "Duplicate";
-        static const char *JOIN_TEXT = "Join";
-        static const char *REMOVE_TEXT = "Remove";
-        static const char *SET_FAVORITE_TEXT = "Set Favorite";
-        static const char *TO_FAVORITE_TEXT = "To Favorite";
+        static const char *TAG = "directolor_base";
 
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
             // ESP_LOGCONFIG("directolor.cover", "  Radio Code: 0x%02X, 0x%02X", this->radio_id_, this->command_);
-        }
-
-        cover::CoverTraits DirectolorCover::get_traits()
-        {
-            auto traits = cover::CoverTraits();
-            traits.set_supports_position(this->movement_duration_ms_ != 0);
-            traits.set_supports_tilt(this->tilt_supported_);
-            traits.set_supports_stop(true);
-            traits.set_is_assumed_state(true);
-            return traits;
         }
 
         void DirectolorCover::loop()
@@ -63,169 +45,12 @@ namespace esphome
 
                 this->base_->sendPayload(payload);
             }
-
-            if (this->ms_duration_for_delayed_stop_ != 0 && (millis() - this->start_of_timed_movement_ >= this->ms_duration_for_delayed_stop_))
-            {
-                this->issue_shade_command(directolor_stop, DIRECTOLOR_CODE_ATTEMPTS);
-                this->ms_duration_for_delayed_stop_ = 0;
-            }
         }
 
         void DirectolorCover::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
-
-            // Initialize and register the join switch
-            if (this->program_function_support_)
-            {
-                this->duplicate_button_ = new ActionButton(this, DUPLICATE_TEXT);
-                App.register_button(this->duplicate_button_);
-
-                this->join_button_ = new ActionButton(this, JOIN_TEXT);
-                App.register_button(this->join_button_);
-
-                this->remove_button_ = new ActionButton(this, REMOVE_TEXT);
-                App.register_button(this->remove_button_);
-            }
-
-            if (this->favorite_support_)
-            {
-                this->set_fav_button_ = new ActionButton(this, SET_FAVORITE_TEXT);
-                App.register_button(this->set_fav_button_);
-
-                this->to_fav_button_ = new ActionButton(this, TO_FAVORITE_TEXT);
-                App.register_button(this->to_fav_button_);
-            }
-        }
-
-        void DirectolorCover::ActionButton::press_action()
-        {
-            this->parent_->on_action_button_press(this->id);
-        }
-
-        void DirectolorCover::on_action_button_press(std::string &id)
-        {
-            if (id.compare(0, strlen(DUPLICATE_TEXT), DUPLICATE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_duplicate, DIRECTOLOR_CODE_ATTEMPTS);
-            }
-            else if (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_join, DIRECTOLOR_CODE_ATTEMPTS * 2);
-            }
-            else if (id.compare(0, strlen(REMOVE_TEXT), REMOVE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS * 2);
-            }
-            else if (id.compare(0, strlen(SET_FAVORITE_TEXT), SET_FAVORITE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_setFav, DIRECTOLOR_CODE_ATTEMPTS);
-            }
-            else if (id.compare(0, strlen(TO_FAVORITE_TEXT), TO_FAVORITE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
-            }
-            else
-            {
-                // Handle unknown action
-                ESP_LOGD(TAG, "Unknown action: %s", id.c_str());
-            }
-        }
-
-        void DirectolorCover::control(const cover::CoverCall &call)
-        {
-            this->ms_duration_for_delayed_stop_ = 0;
-            if (call.get_position().has_value())
-            {
-                float pos = *call.get_position();
-                if (pos == cover::COVER_OPEN)
-                {
-                    this->issue_shade_command(directolor_open, DIRECTOLOR_CODE_ATTEMPTS); // Open command
-                }
-                else if (pos == cover::COVER_CLOSED)
-                {
-                    this->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS); // Close command
-                }
-                else if (pos == this->position)
-                {
-                    ESP_LOGI(TAG, "Shade '%s' already at requested position.", this->get_name().c_str());
-                }
-                else
-                {
-                    if (this->position > pos)
-                        this->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS); // Close command
-                    else
-                        this->issue_shade_command(directolor_open, DIRECTOLOR_CODE_ATTEMPTS); // Open command
-                    ESP_LOGD(TAG, "current position %.2f requested position %.2f total seconds for movement %d", this->position, pos, this->movement_duration_ms_);
-                    this->ms_duration_for_delayed_stop_ = this->movement_duration_ms_ * abs(this->position - pos);
-                    ESP_LOGD(TAG, "desiredDelay: %d", ms_duration_for_delayed_stop_);
-                    this->start_of_timed_movement_ = millis();
-                }
-
-                this->position = pos;
-                if (this->tilt_supported_)
-                    this->tilt = 0;
-                this->publish_state(true);
-            }
-
-            if (call.get_stop())
-            {
-                this->issue_shade_command(directolor_stop, DIRECTOLOR_CODE_ATTEMPTS);
-            }
-
-            if (call.get_tilt())
-            {
-                float tilt = *call.get_tilt();
-                if (tilt == 0)
-                {
-                    this->issue_shade_command(directolor_tiltClose, DIRECTOLOR_CODE_ATTEMPTS);
-                }
-                else if (tilt == 1)
-                {
-                    this->issue_shade_command(directolor_tiltOpen, DIRECTOLOR_CODE_ATTEMPTS);
-                }
-                else
-                {
-                    if (this->tilt == tilt)
-                    {
-                        ESP_LOGD("Directolor", "current tilt = requested tilt");
-                        return;
-                    }
-                    if (this->tilt > tilt)
-                        this->issue_shade_command(directolor_tiltClose, DIRECTOLOR_CODE_ATTEMPTS);
-                    else
-                        this->issue_shade_command(directolor_tiltOpen, DIRECTOLOR_CODE_ATTEMPTS);
-                    ESP_LOGD(TAG, "current tilt %.2f requested tilt %.2f total seconds for tilt %d", this->tilt, tilt, MS_FOR_FULL_TILT_MOVEMENT);
-                    this->ms_duration_for_delayed_stop_ = MS_FOR_FULL_TILT_MOVEMENT * abs(this->tilt - tilt); // gives us the milliseconds of delay.
-                    ESP_LOGD(TAG, "desiredDelay: %d", this->ms_duration_for_delayed_stop_);
-                    this->start_of_timed_movement_ = millis();
-                }
-                this->tilt = tilt;
-                this->position = 0;
-                this->publish_state();
-            }
-        }
-
-        const char *blind_action_to_string(BlindAction action)
-        {
-            switch (action)
-            {
-            case directolor_open:
-                return "open";
-            case directolor_close:
-                return "close";
-            case directolor_stop:
-                return "stop";
-            case directolor_join:
-                return "join";
-            case directolor_remove:
-                return "remove";
-            case directolor_duplicate:
-                return "duplicate";
-            default:
-                return "unknown";
-            }
         }
 
         void DirectolorCover::issue_shade_command(BlindAction blind_action, int copies)
