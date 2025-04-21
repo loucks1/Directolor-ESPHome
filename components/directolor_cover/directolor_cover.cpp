@@ -1,5 +1,7 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
+#include "esphome.h"
+#include <string>
 
 #define MS_FOR_FULL_TILT_MOVEMENT 5000
 
@@ -8,6 +10,12 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
+
+        static const char *DUPLICATE_TEXT = "Duplicate";
+        static const char *JOIN_TEXT = "Join";
+        static const char *REMOVE_TEXT = "Remove";
+        static const char *SET_FAVORITE_TEXT = "Set Favorite";
+        static const char *TO_FAVORITE_TEXT = "To Favorite";
 
         void DirectolorCover::dump_config()
         {
@@ -29,10 +37,17 @@ namespace esphome
         {
             if (this->outstanding_send_attempts_ > 0)
             {
+                BlindAction curr_action = this->current_action_;
+
+                if ((curr_action == directolor_join || curr_action == directolor_remove) && (outstanding_send_attempts_ % 2 == 0))
+                {
+                    curr_action = directolor_duplicate;
+                }
+
                 this->outstanding_send_attempts_--;
                 byte payload[MAX_PAYLOAD_SIZE];
 
-                int length = this->get_radio_command(payload, this->current_action_);
+                int length = this->get_radio_command(payload, curr_action);
 
                 uint16_t crc = calcCRC16((uint8_t *)payload, length, 0x755b, 0xFFFF, 0, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
                 payload[length++] = crc >> 8;
@@ -60,6 +75,62 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
+
+            // Initialize and register the join switch
+            if (this->program_function_support_)
+            {
+                this->duplicate_button_ = new ActionButton(this, DUPLICATE_TEXT);
+                App.register_button(this->duplicate_button_);
+
+                this->join_button_ = new ActionButton(this, JOIN_TEXT);
+                App.register_button(this->join_button_);
+
+                this->remove_button_ = new ActionButton(this, REMOVE_TEXT);
+                App.register_button(this->remove_button_);
+            }
+
+            if (this->favorite_support_)
+            {
+                this->set_fav_button_ = new ActionButton(this, SET_FAVORITE_TEXT);
+                App.register_button(this->set_fav_button_);
+
+                this->to_fav_button_ = new ActionButton(this, TO_FAVORITE_TEXT);
+                App.register_button(this->to_fav_button_);
+            }
+        }
+
+        void DirectolorCover::ActionButton::press_action()
+        {
+            this->parent_->on_action_button_press(this->id);
+        }
+
+        void DirectolorCover::on_action_button_press(std::string &id)
+        {
+            if (id.compare(0, strlen(DUPLICATE_TEXT), DUPLICATE_TEXT) == 0)
+            {
+                this->issue_shade_command(directolor_duplicate, DIRECTOLOR_CODE_ATTEMPTS);
+            }
+            else if (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
+            {
+                this->issue_shade_command(directolor_join, DIRECTOLOR_CODE_ATTEMPTS * 2);
+            }
+            else if (id.compare(0, strlen(REMOVE_TEXT), REMOVE_TEXT) == 0)
+            {
+                this->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS * 2);
+            }
+            else if (id.compare(0, strlen(SET_FAVORITE_TEXT), SET_FAVORITE_TEXT) == 0)
+            {
+                this->issue_shade_command(directolor_setFav, DIRECTOLOR_CODE_ATTEMPTS);
+            }
+            else if (id.compare(0, strlen(TO_FAVORITE_TEXT), TO_FAVORITE_TEXT) == 0)
+            {
+                this->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
+            }
+            else
+            {
+                // Handle unknown action
+                ESP_LOGD(TAG, "Unknown action: %s", id.c_str());
+            }
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
@@ -165,6 +236,148 @@ namespace esphome
             this->outstanding_send_attempts_ = copies;
         }
 
+        static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
+
+        int DirectolorCover::get_duplicate_radio_command(byte *payload, BlindAction blind_action)
+        {
+            const uint8_t offset = 0;
+            int payloadOffset = 0;
+            // int uniqueBytesOffset = i * DUPLICATE_CODE_UNIQUE_BYTES;
+            for (int j = 0; j < sizeof(duplicatePrototype); j++)
+            {
+                switch (j) // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
+                {
+                case 6 + offset:
+                    payload[payloadOffset + j] = command_random_++;
+                    break;
+                case 9 + offset:
+                    payload[payloadOffset + j] = 0x06;
+                    break;
+                case 10 + offset:
+                    payload[payloadOffset + j] = 0x03;
+                    break;
+                case 11 + offset:
+                    payload[payloadOffset + j] = 0x20;
+                    break;
+                case 12 + offset:
+                    payload[payloadOffset + j] = 0x05;
+                    break;
+                case 13 + offset:
+                    payload[payloadOffset + j] = 0x12;
+                    break;
+                case 14 + offset:
+                    payload[payloadOffset + j] = 0x03;
+                    break;
+                case 15 + offset:
+                    payload[payloadOffset + j] = 0xAC;
+                    break;
+                case 16 + offset:
+                    payload[payloadOffset + j] = 0x56;
+                    break;
+                case 17 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[1];
+                    break;
+                case 18 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[0];
+                    break;
+                case 19 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[2];
+                    break;
+                case 20 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[3];
+                    break;
+                default:
+                    payload[payloadOffset + j] = duplicatePrototype[j];
+                    break;
+                }
+            }
+            return sizeof(duplicatePrototype);
+        }
+
+        static constexpr uint8_t groupPrototype[] = {0X11, 0X11, 0xC0, 0X0A, 0X40, 0X05, 0X18, 0XFF, 0XFF, 0X8A, 0X91, 0X08, 0X03, 0X01}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
+
+        int DirectolorCover::get_group_radio_command(byte *payload, BlindAction blind_action)
+        {
+            const uint8_t offset = 0;
+            int payloadOffset = 0;
+            for (int j = 0; j < sizeof(groupPrototype); j++)
+            {
+                switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
+                {
+                case 0 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[0];
+                    break;
+                case 1 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[1];
+                    break;
+                case 6 + offset:
+                    payload[payloadOffset + j] = command_random_++;
+                    break;
+                case 9 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[2];
+                    break;
+                case 10 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[3];
+                    break;
+                case 12 + offset:
+                    payload[payloadOffset + j] = this->channel_;
+                    break;
+                case 13 + offset:
+                    payload[payloadOffset + j] = blind_action;
+                    break;
+                default:
+                    payload[payloadOffset + j] = groupPrototype[j];
+                    break;
+                }
+            }
+            return sizeof(groupPrototype);
+        }
+
+        static constexpr uint8_t setFavPrototype[] = {0X11, 0X11, 0xC0, 0X0F, 0X00, 0X05, 0XD1, 0XFF, 0XFF, 0XB0, 0X51, 0X86, 0X04, 0XB8, 0XB0, 0X51, 0X63, 0X49, 0X00}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
+
+        int DirectolorCover::get_set_fav_radio_command(byte *payload, BlindAction blind_action)
+        {
+            const uint8_t offset = 0;
+            int payloadOffset = 0;
+            int j = 0;
+            while (j + payloadOffset < MAX_PAYLOAD_SIZE)
+            {
+                switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
+                {
+                case 0 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[0];
+                    break;
+                case 1 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[1];
+                    break;
+                case 6 + offset:
+                    payload[payloadOffset + j] = this->command_random_++;
+                    break;
+                case 9 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[2];
+                    break;
+                case 10 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[3];
+                    break;
+                case 13 + offset:
+                    payload[payloadOffset + j] = this->command_random_ + 122;
+                    break;
+                case 14 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[2];
+                    break;
+                case 15 + offset:
+                    payload[payloadOffset + j] = this->radio_code_[3];
+                    break;
+                default:
+                    payload[payloadOffset + j] = setFavPrototype[j];
+                    break;
+                }
+                j++;
+            }
+
+            return sizeof(setFavPrototype) + payloadOffset;
+        }
+
         static constexpr uint8_t commandPrototype[] = {0X11, 0X11, 0xC0, 0X10, 0X00, 0X05, 0XBC, 0XFF, 0XFF, 0X8A, 0X91, 0X86, 0X06, 0X99, 0X01, 0X00, 0X8A, 0X91, 0X52, 0X53, 0X00};
 
         int DirectolorCover::get_radio_command(byte *payload, BlindAction blind_action)
@@ -173,11 +386,11 @@ namespace esphome
             {
             case directolor_join:
             case directolor_remove:
-                return 0;
-            // return getGroupRadioCommand(payload, commandItem);
+                return this->get_group_radio_command(payload, blind_action);
             case directolor_duplicate:
-                return 0;
-                // return getDuplicateRadioCommand(payload, commandItem);
+                return this->get_duplicate_radio_command(payload, blind_action);
+            case directolor_setFav:
+                return this->get_set_fav_radio_command(payload, blind_action);
             }
             const uint8_t offset = 0;
             int payloadOffset = 0;
