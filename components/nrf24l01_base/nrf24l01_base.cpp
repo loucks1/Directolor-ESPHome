@@ -233,7 +233,7 @@ namespace esphome
 
     void Nrf24l01_base::sendPayload(byte *payload)
     {
-      this->queue_.enqueue(payload, 513);
+      this->queue_.enqueue(payload, MESSAGE_SEND_RETRIES);
     }
 
     void Nrf24l01_base::send_code()
@@ -268,6 +268,7 @@ namespace esphome
               break;
           }
         }
+        this->radio.txStandBy();
         if (this->current_sending_payload_.send_attempts == 0)
         {
           ESP_LOGV(TAG, "send code complete");
