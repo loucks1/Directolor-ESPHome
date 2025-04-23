@@ -217,13 +217,10 @@ namespace esphome
               }
             }
 
-            switch (payload[0])
-            {
-            case DUPLICATE_CODE_LENGTH:
+            if (payload[0] == 0x12 && payload[1] = 0x80 && payload[2] == 0x0D && payload[4] == 0xFF && payload[5] == 0xFF && payload[16] == this->remoteCode.radioCode[2] && payload[17] == this->remoteCode.radioCode[3] && payload[18] == 0xC8)
               command = "Duplicate";
-              break;
-            };
-            ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex((char*)this->remoteCode.radioCode, 0, 4, " ").c_str());
+
+            ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex((char *)this->remoteCode.radioCode, 0, 4, " ").c_str());
           }
         }
       }

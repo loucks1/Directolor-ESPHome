@@ -31,7 +31,7 @@ enum BlindAction
   directolor_setFav = 0x49, 
   directolor_join = 0x01,
   directolor_remove = 0x00,
-  directolor_duplicate = 4
+  directolor_duplicate = 0x51
 };
 
 namespace esphome
