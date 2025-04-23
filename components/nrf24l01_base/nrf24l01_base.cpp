@@ -154,12 +154,13 @@ namespace esphome
 
               if (foundPattern > 3 && i > 4)
               {
-                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex(payload, i - 5, 3, " ").c_str());
-
                 this->remoteCode.radioCode[0] = payload[i - 5];
                 this->remoteCode.radioCode[1] = payload[i - 4];
+                this->remoteCode.radioCode[2] = payload[i + 4];
+                this->remoteCode.radioCode[3] = payload[i + 5];
                 this->learningRemote = false;
                 this->enterRemoteCaptureMode();
+                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex(this->remoteCode.radioCode, 0, 4, " ").c_str());
               }
             }
           }
@@ -175,7 +176,7 @@ namespace esphome
               return;
 #endif
 
-            if (payload[4] != 0xFF || payload[5] != 0xFF || payload[8] != 0x86)
+            if (payload[4] != 0xFF || payload[5] != 0xFF || payload[6] != this->remoteCode.radioCode[2] || payload[7] != this->remoteCode.radioCode[3] ||  payload[8] != 0x86)
               return;
 
             ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
@@ -185,8 +186,6 @@ namespace esphome
             {
               uint8_t *commandGroup;
             case COMMAND_CODE_LENGTH:
-              this->remoteCode.radioCode[2] = payload[6];
-              this->remoteCode.radioCode[3] = payload[7];
 
               switch ((BlindAction)payload[16])
               {
