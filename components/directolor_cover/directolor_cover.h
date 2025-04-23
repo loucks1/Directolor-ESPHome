@@ -5,7 +5,7 @@
 #include <CRC.h>
 
 #define DIRECTOLOR_REMOTE_CHANNELS 6
-#define DIRECTOLOR_CODE_ATTEMPTS 3 // this is the number of times we will generate and send the message (3 seems to work well for me, but feel free to change up or down as needed)
+#define DIRECTOLOR_CODE_ATTEMPTS 2 // this is the number of times we will generate and send the message (3 seems to work well for me, but feel free to change up or down as needed)
 
 namespace esphome
 {
