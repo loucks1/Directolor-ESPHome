@@ -160,7 +160,7 @@ namespace esphome
                 this->remoteCode.radioCode[3] = payload[i + 5];
                 this->learningRemote = false;
                 this->enterRemoteCaptureMode();
-                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex(this->remoteCode.radioCode, 0, 4, " ").c_str());
+                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex((char*)this->remoteCode.radioCode, 0, 4, " ").c_str());
               }
             }
           }
