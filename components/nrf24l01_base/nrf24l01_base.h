@@ -8,7 +8,7 @@
 
 #define MAX_PAYLOAD_SIZE 32 // maximum payload that you can send with the nRF24l01+
 
-#define MESSAGE_SEND_RETRIES 513/2     // the number of times to resend the message(seems like numbers > 400 are more reliable - feel free to change as necessary)
+#define MESSAGE_SEND_RETRIES 513    // the number of times to resend the message(seems like numbers > 400 are more reliable - feel free to change as necessary)
 
 #define DIRECTOLOR_CAPTURE_FIRST    // with this enabled, it will only show the first message when in capture mode, otherwise, it dumps every message it can - if you want to see full join or remove codes, you'll need to disable this.
 #define DIRECTOLOR_DEBUG_SENT_CODES // with this enabled, we'll log the codes we're sending
@@ -66,6 +66,8 @@ namespace esphome
       RemoteCode remoteCode;
       bool learningRemote;
       unsigned long lastMillis;
+      unsigned long lastStartAttempt;
+      unsigned long currentCooldown = 1875;
 
       PayloadQueue queue_;
       PayloadEntry current_sending_payload_;
