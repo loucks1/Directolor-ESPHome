@@ -202,6 +202,12 @@ namespace esphome
             case directolor_toFav:
               command = "to Fav";
               break;
+            case directolor_join:
+              command = "Join";
+              break;
+            case directolor_remove:
+              command = "Remove";
+              break;
             }
 
             switch (payload[0])
@@ -209,12 +215,6 @@ namespace esphome
             case GROUP_CODE_LENGTH:
               switch ((BlindAction)payload[10])
               {
-              case directolor_join:
-                command = "Join";
-                break;
-              case directolor_remove:
-                command = "Remove";
-                break;
               }
               break;
             case STORE_FAV_CODE_LENGTH:
