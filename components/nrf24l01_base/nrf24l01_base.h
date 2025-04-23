@@ -8,11 +8,6 @@
 
 #define MAX_QUEUED_COMMANDS 20
 
-#define COMMAND_CODE_LENGTH 17
-#define DUPLICATE_CODE_LENGTH 18
-#define GROUP_CODE_LENGTH 10
-#define STORE_FAV_CODE_LENGTH 15
-
 #define MAX_PAYLOAD_SIZE 32 // maximum payload that you can send with the nRF24l01+
 
 #define MESSAGE_SEND_RETRIES 513/3     // the number of times to resend the message(seems like numbers > 400 are more reliable - feel free to change as necessary)
