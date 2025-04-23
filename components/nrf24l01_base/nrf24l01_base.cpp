@@ -178,38 +178,43 @@ namespace esphome
 
             ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
 
-            if (payload[4] != 0xFF || payload[5] != 0xFF || payload[6] != this->remoteCode.radioCode[2] || payload[7] != this->remoteCode.radioCode[3] || payload[8] != 0x86)
-              return;
+            if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x86)
+              switch (payload[bytes - 5])
+              {
+              case directolor_open:
+                command = "Open";
+                break;
+              case directolor_close:
+                command = "Close";
+                break;
+              case directolor_tiltOpen:
+                command = "Tilt Open";
+                break;
+              case directolor_tiltClose:
+                command = "Tilt Close";
+                break;
+              case directolor_stop:
+                command = "Stop";
+                break;
+              case directolor_toFav:
+                command = "to Fav";
+                break;
+              }
+
+            if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x08)
+            {
+              switch (payload[bytes - 4])
+              {
+              case directolor_join:
+                command = "Join";
+                break;
+              case directolor_remove:
+                command = "Remove";
+                break;
+              }
+            }
 
             const char *command = "ERROR";
-
-            switch (payload[bytes - 5])
-            {
-            case directolor_open:
-              command = "Open";
-              break;
-            case directolor_close:
-              command = "Close";
-              break;
-            case directolor_tiltOpen:
-              command = "Tilt Open";
-              break;
-            case directolor_tiltClose:
-              command = "Tilt Close";
-              break;
-            case directolor_stop:
-              command = "Stop";
-              break;
-            case directolor_toFav:
-              command = "to Fav";
-              break;
-            case directolor_join:
-              command = "Join";
-              break;
-            case directolor_remove:
-              command = "Remove";
-              break;
-            }
 
             switch (payload[0])
             {
