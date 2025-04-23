@@ -28,7 +28,7 @@ enum BlindAction
   directolor_tiltClose = 0x4C,
   directolor_stop = 0x53,
   directolor_toFav = 0x48,
-  directolor_setFav = 6, // do this one in a bit...
+  directolor_setFav = 6, 
   directolor_join = 0x01,
   directolor_remove = 0x00,
   directolor_duplicate = 4
