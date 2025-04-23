@@ -182,9 +182,9 @@ namespace esphome
             ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
             const char *command = "ERROR";
 
+            ESP_LOGI(TAG, "Checking payload %X", payload[bytes - 4]);
             switch (payload[bytes - 4])
             {
-              ESP_LOGI(TAG, "Checking payload %X", payload[bytes - 4]);
             case directolor_open:
               command = "Open";
               ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex(reinterpret_cast<char *>(this->remoteCode.radioCode), 0, 4, " ").c_str());
