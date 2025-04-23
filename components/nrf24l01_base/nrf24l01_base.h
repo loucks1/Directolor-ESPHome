@@ -16,7 +16,7 @@
 #define MAX_PAYLOAD_SIZE 32 // maximum payload that you can send with the nRF24l01+
 
 #define MESSAGE_SEND_ATTEMPTS 3         // this is the number of times we will generate and send the message (3 seems to work well for me, but feel free to change up or down as needed)
-#define MESSAGE_SEND_RETRIES 513        // the number of times to resend the message(seems like numbers > 400 are more reliable - feel free to change as necessary)
+#define MESSAGE_SEND_RETRIES 513 / 6       // the number of times to resend the message(seems like numbers > 400 are more reliable - feel free to change as necessary)
 #define INTERMESSAGE_SEND_DELAY 512 / 3 // the delay between message sends (if this is too low, the blinds seem to 'miss' messsages)
 
 #define DIRECTOLOR_CAPTURE_FIRST    // with this enabled, it will only show the first message when in capture mode, otherwise, it dumps every message it can - if you want to see full join or remove codes, you'll need to disable this.
