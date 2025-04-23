@@ -29,7 +29,8 @@ namespace esphome
 
         ESP_LOGI(TAG, "attempting to start radio");
 
-        this->radioValid = radio.begin();
+        this->radioValid = this->radio.begin();
+        
         if (this->radioValid)
         {
           this->radio.setAutoAck(false);               // auto-ack has to be off or everything breaks because I haven't been able to RE the protocol CRC / validation
