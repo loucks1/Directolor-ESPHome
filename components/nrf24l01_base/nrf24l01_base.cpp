@@ -154,12 +154,13 @@ namespace esphome
 
               if (foundPattern > 3 && i > 4)
               {
-                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex(payload, i - 5, 3, " ").c_str());
-
                 this->remoteCode.radioCode[0] = payload[i - 5];
                 this->remoteCode.radioCode[1] = payload[i - 4];
+                this->remoteCode.radioCode[2] = payload[i + 4];
+                this->remoteCode.radioCode[3] = payload[i + 5];
                 this->learningRemote = false;
                 this->enterRemoteCaptureMode();
+                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex((char *)this->remoteCode.radioCode, 0, 4, " ").c_str());
               }
             }
           }
@@ -175,17 +176,10 @@ namespace esphome
               return;
 #endif
 
-            ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
             const char *command = "ERROR";
 
-            switch (payload[0])
-            {
-              uint8_t *commandGroup;
-            case COMMAND_CODE_LENGTH:
-              this->remoteCode.radioCode[2] = payload[6];
-              this->remoteCode.radioCode[3] = payload[7];
-
-              switch ((BlindAction)payload[16])
+            if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x86)
+              switch (payload[bytes - 5])
               {
               case directolor_open:
                 command = "Open";
@@ -205,10 +199,13 @@ namespace esphome
               case directolor_toFav:
                 command = "to Fav";
                 break;
-              };
-              break;
-            case GROUP_CODE_LENGTH:
-              switch ((BlindAction)payload[10])
+              case directolor_setFav:
+                command = "Store Favorite";
+              }
+
+            if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x08)
+            {
+              switch (payload[bytes - 4])
               {
               case directolor_join:
                 command = "Join";
@@ -217,15 +214,16 @@ namespace esphome
                 command = "Remove";
                 break;
               }
-              break;
-            case STORE_FAV_CODE_LENGTH:
-              command = "Store Favorite";
-              break;
-            case DUPLICATE_CODE_LENGTH:
+            }
+
+            if (payload[0] == 0x12 && payload[1] == 0x80 && payload[2] == 0x0D && payload[4] == 0xFF && payload[5] == 0xFF && payload[16] == this->remoteCode.radioCode[2] && payload[17] == this->remoteCode.radioCode[3] && payload[18] == 0xC8)
               command = "Duplicate";
-              break;
-            };
-            ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex(reinterpret_cast<char *>(this->remoteCode.radioCode), 0, 4, " ").c_str());
+
+            if (command == "ERROR")
+              return;
+
+            ESP_LOGV(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
+            ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex((char *)this->remoteCode.radioCode, 0, 4, " ").c_str());
           }
         }
       }
@@ -233,7 +231,7 @@ namespace esphome
 
     void Nrf24l01_base::sendPayload(byte *payload)
     {
-      this->queue_.enqueue(payload, 513);
+      this->queue_.enqueue(payload, MESSAGE_SEND_RETRIES);
     }
 
     void Nrf24l01_base::send_code()
@@ -242,8 +240,7 @@ namespace esphome
       {
         if (queue_.dequeue(this->current_sending_payload_))
         {
-          ESP_LOGV(TAG, "Processing - send_attempts: %d: %s",
-                   this->current_sending_payload_.send_attempts, this->formatHex(this->current_sending_payload_.payload, 0, 32, " ").c_str());
+          ESP_LOGV(TAG, "Processing - send_attempts: %d: %s", this->current_sending_payload_.send_attempts, this->formatHex((char *)this->current_sending_payload_.payload, 0, 32, " ").c_str());
 
           this->radio.powerUp();
           this->radio.stopListening(); // put radio in TX mode
@@ -269,6 +266,7 @@ namespace esphome
               break;
           }
         }
+        this->radio.txStandBy();
         if (this->current_sending_payload_.send_attempts == 0)
         {
           ESP_LOGV(TAG, "send code complete");

@@ -5,26 +5,12 @@
 #include <CRC.h>
 
 #define DIRECTOLOR_REMOTE_CHANNELS 6
-#define DIRECTOLOR_CODE_ATTEMPTS 3
+#define DIRECTOLOR_CODE_ATTEMPTS 2 // this is the number of times we will generate and send the message (3 seems to work well for me, but feel free to change up or down as needed)
 
 namespace esphome
 {
   namespace directolor_cover
   {
-    enum BlindAction
-    {
-      directolor_open = 0x55,
-      directolor_close = 0x44,
-      directolor_tiltOpen = 0x52,
-      directolor_tiltClose = 0x4C,
-      directolor_stop = 0x53,
-      directolor_toFav = 0x48,
-      directolor_setFav = 6, // do this one in a bit...
-      directolor_join = 0x01,
-      directolor_remove = 0x00,
-      directolor_duplicate = 4
-    };
-
     class DirectolorCover : public cover::Cover, public Component
     {
     public:
