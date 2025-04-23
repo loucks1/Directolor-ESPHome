@@ -6,8 +6,6 @@
 #include <stdint.h>
 #include "payload_queue.h" // Include the new PayloadQueue class
 
-#define MAX_QUEUED_COMMANDS 20
-
 #define MAX_PAYLOAD_SIZE 32 // maximum payload that you can send with the nRF24l01+
 
 #define MESSAGE_SEND_RETRIES 513/3     // the number of times to resend the message(seems like numbers > 400 are more reliable - feel free to change as necessary)
