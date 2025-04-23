@@ -242,8 +242,7 @@ namespace esphome
       {
         if (queue_.dequeue(this->current_sending_payload_))
         {
-          ESP_LOGV(TAG, "Processing - send_attempts: %d: %s",
-                   this->current_sending_payload_.send_attempts, this->formatHex(this->current_sending_payload_.payload, 0, 32, " ").c_str());
+          ESP_LOGV(TAG, "Processing - send_attempts: %d: %s", this->current_sending_payload_.send_attempts, (char *)this->formatHex(this->current_sending_payload_.payload, 0, 32, " ").c_str());
 
           this->radio.powerUp();
           this->radio.stopListening(); // put radio in TX mode
