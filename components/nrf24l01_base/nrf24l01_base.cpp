@@ -160,7 +160,7 @@ namespace esphome
                 this->remoteCode.radioCode[3] = payload[i + 5];
                 this->learningRemote = false;
                 this->enterRemoteCaptureMode();
-                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex((char*)this->remoteCode.radioCode, 0, 4, " ").c_str());
+                ESP_LOGI(TAG, "Found Remote with address: %s", this->formatHex((char *)this->remoteCode.radioCode, 0, 4, " ").c_str());
               }
             }
           }
@@ -176,7 +176,7 @@ namespace esphome
               return;
 #endif
 
-            if (payload[4] != 0xFF || payload[5] != 0xFF || payload[6] != this->remoteCode.radioCode[2] || payload[7] != this->remoteCode.radioCode[3] ||  payload[8] != 0x86)
+            if (payload[4] != 0xFF || payload[5] != 0xFF || payload[6] != this->remoteCode.radioCode[2] || payload[7] != this->remoteCode.radioCode[3] || payload[8] != 0x86)
               return;
 
             ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
@@ -184,10 +184,11 @@ namespace esphome
 
             switch (payload[bytes - 4])
             {
-              case directolor_open:
-                command = "Open";
-                ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex(reinterpret_cast<char *>(this->remoteCode.radioCode), 0, 4, " ").c_str());
-                break;
+              ESP_LOGI(TAG, "Checking payload %X", payload[bytes - 4]);
+            case directolor_open:
+              command = "Open";
+              ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex(reinterpret_cast<char *>(this->remoteCode.radioCode), 0, 4, " ").c_str());
+              break;
             }
 
             switch (payload[0])

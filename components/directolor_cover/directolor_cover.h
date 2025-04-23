@@ -11,7 +11,6 @@ namespace esphome
 {
   namespace directolor_cover
   {
-    
     class DirectolorCover : public cover::Cover, public Component
     {
     public:
