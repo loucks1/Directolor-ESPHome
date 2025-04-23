@@ -176,7 +176,7 @@ namespace esphome
               return;
 #endif
 
-            ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
+            ESP_LOGV(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
             const char *command = "ERROR";
 
             if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x86)
@@ -200,6 +200,8 @@ namespace esphome
               case directolor_toFav:
                 command = "to Fav";
                 break;
+              case directolor_setFav:
+                command = "Store Favorite";
               }
 
             if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x08)
@@ -215,22 +217,13 @@ namespace esphome
               }
             }
 
-
             switch (payload[0])
             {
-            case GROUP_CODE_LENGTH:
-              switch ((BlindAction)payload[10])
-              {
-              }
-              break;
-            case STORE_FAV_CODE_LENGTH:
-              command = "Store Favorite";
-              break;
             case DUPLICATE_CODE_LENGTH:
               command = "Duplicate";
               break;
             };
-            ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex(reinterpret_cast<char *>(this->remoteCode.radioCode), 0, 4, " ").c_str());
+            ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex((char*)this->remoteCode.radioCode, 0, 4, " ").c_str());
           }
         }
       }
