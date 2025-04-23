@@ -182,8 +182,8 @@ namespace esphome
             ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
             const char *command = "ERROR";
 
-            ESP_LOGI(TAG, "Checking payload %X", payload[bytes - 4]);
-            switch (payload[bytes - 4])
+            ESP_LOGI(TAG, "Checking payload %X", payload[bytes - 5]);
+            switch (payload[bytes - 5])
             {
             case directolor_open:
               command = "Open";
