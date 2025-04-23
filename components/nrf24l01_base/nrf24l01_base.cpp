@@ -176,12 +176,12 @@ namespace esphome
               return;
 #endif
 
-            if (payload[4] != 0xFF || payload[5] != 0xFF || payload[6] != this->remoteCode.radioCode[2] || payload[7] != this->remoteCode.radioCode[3] || payload[8] != 0x86)
-              return;
-
             ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
             const char *command = "ERROR";
 
+            if (payload[4] != 0xFF || payload[5] != 0xFF || payload[6] != this->remoteCode.radioCode[2] || payload[7] != this->remoteCode.radioCode[3] || payload[8] != 0x86)
+              return;
+d
             switch (payload[bytes - 5])
             {
             case directolor_open:
