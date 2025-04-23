@@ -182,42 +182,30 @@ namespace esphome
             ESP_LOGD(TAG, "bytes: %d pipe: %d: %s", bytes - 1, pipe, this->formatHex(payload, 0, bytes, " ").c_str());
             const char *command = "ERROR";
 
-            ESP_LOGI(TAG, "Checking payload %X", payload[bytes - 5]);
             switch (payload[bytes - 5])
             {
             case directolor_open:
               command = "Open";
-              ESP_LOGI(TAG, "Received %s from: %s", command, this->formatHex(reinterpret_cast<char *>(this->remoteCode.radioCode), 0, 4, " ").c_str());
+              break;
+            case directolor_close:
+              command = "Close";
+              break;
+            case directolor_tiltOpen:
+              command = "Tilt Open";
+              break;
+            case directolor_tiltClose:
+              command = "Tilt Close";
+              break;
+            case directolor_stop:
+              command = "Stop";
+              break;
+            case directolor_toFav:
+              command = "to Fav";
               break;
             }
 
             switch (payload[0])
             {
-              uint8_t *commandGroup;
-            case COMMAND_CODE_LENGTH:
-
-              switch ((BlindAction)payload[16])
-              {
-              case directolor_open:
-                command = "Open";
-                break;
-              case directolor_close:
-                command = "Close";
-                break;
-              case directolor_tiltOpen:
-                command = "Tilt Open";
-                break;
-              case directolor_tiltClose:
-                command = "Tilt Close";
-                break;
-              case directolor_stop:
-                command = "Stop";
-                break;
-              case directolor_toFav:
-                command = "to Fav";
-                break;
-              };
-              break;
             case GROUP_CODE_LENGTH:
               switch ((BlindAction)payload[10])
               {
