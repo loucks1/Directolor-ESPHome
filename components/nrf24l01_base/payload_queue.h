@@ -4,7 +4,7 @@
 #include <cstdint> // For uint8_t
 
 // Define the maximum queue size
-#define QUEUE_SIZE 10
+#define QUEUE_SIZE 100
 
 // Struct to hold a single payload and its metadata
 struct PayloadEntry {
