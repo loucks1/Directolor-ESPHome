@@ -19,6 +19,12 @@ namespace esphome
 
     bool Nrf24l01_base::radioStarted()
     {
+      if (this->radio.failureDetected)
+      {
+          this->radioValid = false;
+          this->radio.failureDetected = false;
+      }
+
       if (!this->radioValid)
       {
         if (!radioInitialized)
@@ -30,7 +36,7 @@ namespace esphome
         ESP_LOGI(TAG, "attempting to start radio");
 
         this->radioValid = this->radio.begin();
-        
+
         if (this->radioValid)
         {
           this->radio.setAutoAck(false);               // auto-ack has to be off or everything breaks because I haven't been able to RE the protocol CRC / validation
@@ -51,6 +57,7 @@ namespace esphome
           ESP_LOGE(TAG, "Failure starting radio");
         }
       }
+      
       return this->radioValid;
     }
 
@@ -237,6 +244,8 @@ namespace esphome
 
     void Nrf24l01_base::send_code()
     {
+      if (!this->radioStarted())
+        return;
       if (this->current_sending_payload_.send_attempts == 0)
       {
         if (queue_.dequeue(this->current_sending_payload_))
