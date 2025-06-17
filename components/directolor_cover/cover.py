@@ -15,7 +15,7 @@ DirectolorCover = directolor_cover_ns.class_("DirectolorCover", cover.Cover, cg.
 cg.add_library("robtillaart/CRC", None)
 
 # Configuration schema
-CONFIG_SCHEMA = cover.cover_schema({
+CONFIG_SCHEMA = cover.cover_schema(DirectolorCover).extend({
     cv.GenerateID(): cv.declare_id(DirectolorCover),
     cv.Required("base"): cv.use_id(nrf24l01),  # Correct type: esphome::nrf24l01_base::Nrf24l01_base
     cv.Required("radio_code"): cv.All(
