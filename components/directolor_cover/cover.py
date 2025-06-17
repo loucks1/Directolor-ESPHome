@@ -36,9 +36,8 @@ CONFIG_SCHEMA = cover.cover_schema(DirectolorCover).extend({
 
 # Generate C++ code
 async def to_code(config):
-    var = cg.new_Pvariable(config[CONF_ID])
+    var = await cover.new_cover(config)
     await cg.register_component(var, config)
-    await cover.register_cover(var, config)
     base = await cg.get_variable(config["base"])  # Retrieves the Nrf24l01_base object
     cg.add(var.set_base(base))  # Pass the base object directly
     cg.add(var.set_radio_code(config["radio_code"][0], config["radio_code"][1], config["radio_code"][2], config["radio_code"][3]))   
