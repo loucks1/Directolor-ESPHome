@@ -42,7 +42,7 @@ namespace esphome
       void loop() override;
       void dump_config() override;
       void set_led_pin(int pin);
-      void sendPayload(byte *payload);
+      void sendPayload(uint8_t *payload);
 
     private:
       struct RemoteCode

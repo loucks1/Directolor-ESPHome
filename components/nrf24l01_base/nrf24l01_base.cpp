@@ -237,7 +237,7 @@ namespace esphome
       }
     }
 
-    void Nrf24l01_base::sendPayload(byte *payload)
+    void Nrf24l01_base::sendPayload(uint8_t *payload)
     {
       this->queue_.enqueue(payload, MESSAGE_SEND_RETRIES);
     }
