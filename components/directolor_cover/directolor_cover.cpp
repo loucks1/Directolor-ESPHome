@@ -45,7 +45,7 @@ namespace esphome
                 }
 
                 this->outstanding_send_attempts_--;
-                byte payload[MAX_PAYLOAD_SIZE];
+                uint8_t payload[MAX_PAYLOAD_SIZE];
 
                 int length = this->get_radio_command(payload, curr_action);
 
@@ -238,7 +238,7 @@ namespace esphome
 
         static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
 
-        int DirectolorCover::get_duplicate_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorCover::get_duplicate_radio_command(uint8_t *payload, BlindAction blind_action)
         {
             const uint8_t offset = 0;
             int payloadOffset = 0;
@@ -296,7 +296,7 @@ namespace esphome
 
         static constexpr uint8_t groupPrototype[] = {0X11, 0X11, 0xC0, 0X0A, 0X40, 0X05, 0X18, 0XFF, 0XFF, 0X8A, 0X91, 0X08, 0X03, 0X01}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
 
-        int DirectolorCover::get_group_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorCover::get_group_radio_command(uint8_t *payload, BlindAction blind_action)
         {
             const uint8_t offset = 0;
             int payloadOffset = 0;
@@ -335,7 +335,7 @@ namespace esphome
 
         static constexpr uint8_t setFavPrototype[] = {0X11, 0X11, 0xC0, 0X0F, 0X00, 0X05, 0XD1, 0XFF, 0XFF, 0XB0, 0X51, 0X86, 0X04, 0XB8, 0XB0, 0X51, 0X63, 0X49, 0X00}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
 
-        int DirectolorCover::get_set_fav_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorCover::get_set_fav_radio_command(uint8_t *payload, BlindAction blind_action)
         {
             const uint8_t offset = 0;
             int payloadOffset = 0;
@@ -380,7 +380,7 @@ namespace esphome
 
         static constexpr uint8_t commandPrototype[] = {0X11, 0X11, 0xC0, 0X10, 0X00, 0X05, 0XBC, 0XFF, 0XFF, 0X8A, 0X91, 0X86, 0X06, 0X99, 0X01, 0X00, 0X8A, 0X91, 0X52, 0X53, 0X00};
 
-        int DirectolorCover::get_radio_command(byte *payload, BlindAction blind_action)
+        int DirectolorCover::get_radio_command(uint8_t *payload, BlindAction blind_action)
         {
             switch (blind_action)
             {
