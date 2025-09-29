@@ -25,7 +25,7 @@ Copy the bytes from your remote into the radio_code below, keeping the same posi
 
 You've now cloned your remote into directolor.  Test that you can control your shades via the web interface buttons. 
 
-You must include the external_components: once
+You must include the external_components: once<br>
 You must include the nrf24l01_base component once.  The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.
 You can include multiple "- platform: directolor_cover" sections, you will typically have one for each shade.
   Make sure the base value is whatever id you gave to nf24l01_base
