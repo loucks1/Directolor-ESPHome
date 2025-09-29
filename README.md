@@ -38,6 +38,8 @@ You can include multiple "- platform: directolor_cover" sections, you will typic
   favorite_support - whether or not to create the buttons to set and go to the favorite position of the blind
   program_support - whether or not to create the buttons to allow join, remove and duplicate for this blind (radio_code / channel combination)
 
+You MUST include a button in your configuration otherwise the compilation will fail with a bunch of:  "class esphome::Application' has no member named 'register_button" errors
+I've included a restart button example that you can use at the end of the example configuration below
 
 ```yaml
 # example configuration:
@@ -65,7 +67,14 @@ cover:
     tilt_supported: true  
     favorite_support: true
     program_support: true
+
+button:
+  - platform: restart
+    icon: mdi:power-cycle
+    name: "ESP Reboot"
 ```
+
+
 
 To connect the ESP32 to the NRF24L01+ connect:
 <br>(Some have recommended a 10uF cap across ground and 3.3V - I haven't needed the cap.)
