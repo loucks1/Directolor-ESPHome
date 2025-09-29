@@ -28,15 +28,15 @@ You've now cloned your remote into directolor.  Test that you can control your s
 You must include the external_components: once<br>
 You must include the nrf24l01_base component once.  The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.<br>
 You can include multiple "- platform: directolor_cover" sections, you will typically have one for each shade.<br>
-  Make sure the base value is whatever id you gave to nf24l01_base<br>
-  id is any valid ESPHome id<br>
-  name is the name you'd like it to have (set web_server: to version: 3 if it doesn't show the name in the UI)<br>
-  radio_code - see above or just put random values (hex) in here and join your blinds to it<br>
-  channel - the number of the blind on your remote<br>
-  movement_duration - a time value that tells how long it takes to fully open / close the blind.  If you leave this out, you will NOT get positional control of your blind, just open / close<br>
-  tilt_supported - whether or not the blind has tilt functions<br>
-  favorite_support - whether or not to create the buttons to set and go to the favorite position of the blind<br>
-  program_support - whether or not to create the buttons to allow join, remove and duplicate for this blind (radio_code / channel combination)<br>
+&emsp;Make sure the base value is whatever id you gave to nf24l01_base<br>
+&emsp;id is any valid ESPHome id<br>
+&emsp;name is the name you'd like it to have (set web_server: to version: 3 if it doesn't show the name in the UI)<br>
+&emsp;radio_code - see above or just put random values (hex) in here and join your blinds to it<br>
+&emsp;channel - the number of the blind on your remote<br>
+&emsp;movement_duration - a time value that tells how long it takes to fully open / close the blind.  If you leave this out, you will NOT get positional control of your blind, just open / close<br>
+&emsp;tilt_supported - whether or not the blind has tilt functions<br>
+&emsp;favorite_support - whether or not to create the buttons to set and go to the favorite position of the blind<br>
+&emsp;program_support - whether or not to create the buttons to allow join, remove and duplicate for this blind (radio_code / channel combination)<br>
 
 You MUST include a button in your configuration otherwise the compilation will fail with a bunch of:  "class esphome::Application' has no member named 'register_button" errors.  I've included a restart button example that you can use at the end of the example configuration below
 
