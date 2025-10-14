@@ -20,7 +20,7 @@ namespace esphome
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
-            // ESP_LOGCONFIG("directolor.cover", "  Radio Code: 0x%02X, 0x%02X", this->radio_id_, this->command_);
+            ESP_LOGCONFIG(TAG, "Fav '%s' - Prog '%s'", this->favorite_support_, this->program_function_support_);
         }
 
         cover::CoverTraits DirectolorCover::get_traits()
