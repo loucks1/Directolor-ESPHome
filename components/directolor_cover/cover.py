@@ -2,6 +2,7 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import cover
 from esphome.const import CONF_ID
+from esphome.components import button
 from ..nrf24l01_base import nrf24l01  # This imports esphome::nrf24l01_base::Nrf24l01_base
 
 DEPENDENCIES = ["nrf24l01_base"]
@@ -46,3 +47,5 @@ async def to_code(config):
     cg.add(var.set_channel(config["channel"]))
     cg.add(var.set_favorite_support(config["favorite_support"]))
     cg.add(var.set_program_function_support(config["program_support"]))
+    btn = await button.register_button(var)
+    cg.add(var.set_button(btn))
