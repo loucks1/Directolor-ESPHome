@@ -20,7 +20,7 @@ namespace esphome
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
-            ESP_LOGCONFIG(TAG, "Fav '%s' - Prog '%s'", this->favorite_support_, this->program_function_support_);
+            ESP_LOGCONFIG(TAG, "Fav '%d' - Prog '%d'", this->favorite_support_, this->program_function_support_);
         }
 
         cover::CoverTraits DirectolorCover::get_traits()
