@@ -15,6 +15,8 @@ DirectolorCover = directolor_cover_ns.class_("DirectolorCover", cover.Cover, cg.
 
 cg.add_library("robtillaart/CRC", None)
 
+DirectolorButton = directolor_cover_ns.class_("DirectolorButton", button.Button, cg.Component)
+
 # Configuration schema
 CONFIG_SCHEMA = cover.cover_schema(DirectolorCover).extend({
     cv.GenerateID(): cv.declare_id(DirectolorCover),
@@ -47,5 +49,5 @@ async def to_code(config):
     cg.add(var.set_channel(config["channel"]))
     cg.add(var.set_favorite_support(config["favorite_support"]))
     cg.add(var.set_program_function_support(config["program_support"]))
-    btn = await button.new_button("TEST")
+    btn = await button.new_button(button.button_schema(DirectolorButton))
     await cg.register_parented(btn, var)
