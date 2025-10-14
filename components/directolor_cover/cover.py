@@ -47,5 +47,5 @@ async def to_code(config):
     cg.add(var.set_channel(config["channel"]))
     cg.add(var.set_favorite_support(config["favorite_support"]))
     cg.add(var.set_program_function_support(config["program_support"]))
-    btn = await button.register_button(var)
-    cg.add(var.set_button(btn))
+    btn = await button.new_button("TEST")
+    await cg.register_parented(btn, var)
