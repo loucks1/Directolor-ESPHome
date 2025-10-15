@@ -37,15 +37,15 @@ cover:
 
 button:
   - platform: template
-    id: "${id}_test_close"
-    name: "${name} test close"
-    on_press:
-      then:
-        - lambda: id(${id})->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS);
-  - platform: template
     id: "${id}_to_favorite"
     name: "${name} to favorite"
     disabled_by_default: !${favorite_support}
     on_press:
       then:
         - lambda: id(${id})->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
+  - platform: template
+    id: "${id}_test_close"
+    name: "${name} test close"
+    on_press:
+      then:
+        - lambda: id(${id})->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS);
