@@ -11,16 +11,9 @@ namespace esphome
     {
         static const char *TAG = "directolor_cover";
 
-        static const char *DUPLICATE_TEXT = "Duplicate";
-        static const char *JOIN_TEXT = "Join";
-        static const char *REMOVE_TEXT = "Remove";
-        static const char *SET_FAVORITE_TEXT = "Set Favorite";
-        static const char *TO_FAVORITE_TEXT = "To Favorite";
-
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
-            ESP_LOGCONFIG(TAG, "Fav '%d' - Prog '%d'", this->favorite_support_, this->program_function_support_);
         }
 
         cover::CoverTraits DirectolorCover::get_traits()
@@ -75,62 +68,6 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = random(256);
-
-            // Initialize and register the join switch
-            if (this->program_function_support_)
-            {
-                this->duplicate_button_ = new ActionButton(this, DUPLICATE_TEXT);
-                App.register_button(this->duplicate_button_);
-
-                this->join_button_ = new ActionButton(this, JOIN_TEXT);
-                App.register_button(this->join_button_);
-
-                this->remove_button_ = new ActionButton(this, REMOVE_TEXT);
-                App.register_button(this->remove_button_);
-            }
-
-            if (this->favorite_support_)
-            {
-                this->set_fav_button_ = new ActionButton(this, SET_FAVORITE_TEXT);
-                App.register_button(this->set_fav_button_);
-
-                this->to_fav_button_ = new ActionButton(this, TO_FAVORITE_TEXT);
-                App.register_button(this->to_fav_button_);
-            }
-        }
-
-        void DirectolorCover::ActionButton::press_action()
-        {
-            this->parent_->on_action_button_press(this->id);
-        }
-
-        void DirectolorCover::on_action_button_press(std::string &id)
-        {
-            if (id.compare(0, strlen(DUPLICATE_TEXT), DUPLICATE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_duplicate, DIRECTOLOR_CODE_ATTEMPTS);
-            }
-            else if (id.compare(0, strlen(JOIN_TEXT), JOIN_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_join, DIRECTOLOR_CODE_ATTEMPTS * 2);
-            }
-            else if (id.compare(0, strlen(REMOVE_TEXT), REMOVE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS * 2);
-            }
-            else if (id.compare(0, strlen(SET_FAVORITE_TEXT), SET_FAVORITE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_setFav, DIRECTOLOR_CODE_ATTEMPTS);
-            }
-            else if (id.compare(0, strlen(TO_FAVORITE_TEXT), TO_FAVORITE_TEXT) == 0)
-            {
-                this->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
-            }
-            else
-            {
-                // Handle unknown action
-                ESP_LOGD(TAG, "Unknown action: %s", id.c_str());
-            }
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)

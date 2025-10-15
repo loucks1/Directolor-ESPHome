@@ -71,10 +71,3 @@ button:
     on_press:
       then:
         - lambda: id(${id})->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS);
-        
-  - platform: template
-    id: "${id}_test_close"
-    name: "${name} test close"
-    on_press:
-      then:
-        - lambda: id(${id})->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS);
