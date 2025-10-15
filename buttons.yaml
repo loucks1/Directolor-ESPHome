@@ -1,26 +1,25 @@
 # buttons.yaml - Simple package for two configurable buttons
 
 substitutions:
-  button1_name: "Default Button 1"  # Override in main YAML
-  button2_name: "Default Button 2"  # Override in main YAML
+  nrf24l01base_id: nrf24l01
+  cover_id: directolor_shade
+  cover_name: Upper Shades Right
+  cover_movement_duration: 0s
+  cover_channel: 3
+  cover_tilt_supported: false
+  cover_favorite_support: false
+  cover_program_support: false
   
-  # Optional: IDs for actions (e.g., reference other entities)
-  button3_action_id: button3_action  # e.g., toggle a light with this ID
-  button4_action_id: button4_action  # e.g., toggle another entity4
-button:
-  # Button 1: Configurable name and on_press action
-  - platform: template
-    name: ${button1_name}
-    id: ${button3_action_id}
-    on_press:
-      - logger.log: "Button 1 pressed!"
-      # Add more actions here, e.g.:
-      # - switch.toggle: light.my_light  # If you define a light elsewhere
-
-  # Button 2: Similar to Button 1
-  - platform: template
-    name: ${button2_name}
-    id: ${button4_action_id}  # Fixed ID for simplicity; make substitutable if needed
-    on_press:
-      - logger.log: "Button 2 pressed!"
-      # Example: - light.toggle: another_light
+cover:
+  - platform: directolor_cover
+    base: ${nrf24l01base_id}
+    id: $cover_id
+    name: $cover_name
+    radio_code:   #0x11, 0x11, 0xB9, 0x7B
+      - 0x11
+      - 0x11
+      - 0xB9
+      - 0x7B
+    movement_duration: ${movement_duration}
+    channel: ${cover_channel}
+    tilt_supported: ${cover_tilt_supported}
