@@ -14,6 +14,12 @@ substitutions:
   cover_tilt_supported: false
   cover_favorite_support: false
   cover_program_support: false
+  radio_code:
+      - 0x11
+      - 0x11
+      - 0xB9
+      - 0x7B
+  
 
 nrf24l01_base:
   id: nrf24l01
@@ -25,16 +31,17 @@ cover:
     base: nrf24l01
     id: $cover_id
     name: $cover_name
-    radio_code:   #0x11, 0x11, 0xB9, 0x7B
-      - 0x11
-      - 0x11
-      - 0xB9
-      - 0x7B
+    radio_code: ${radio_code}
     movement_duration: ${cover_movement_duration}
     channel: ${cover_channel}
     tilt_supported: ${cover_tilt_supported}
 
 button:
+  - platform: template
+    name: "${cover_name} test close"
+    on_press:
+      then:
+        - lambda: id($cover_id)->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS);
   - platform: template
     name: "${cover_name} to favorite"
     disabled_by_default: !${cover_favorite_support}
