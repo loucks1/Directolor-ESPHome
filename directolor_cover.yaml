@@ -1,7 +1,12 @@
 # buttons.yaml - Simple package for two configurable buttons
 
+external_components:
+  source: github://loucks1/Directolor-ESPHome@IssueWithFavoriteAndProgram
+  refresh: 1s
+
 substitutions:
-  nrf24l01base_id: nrf24l01
+  nrf24_ce_pin: 22
+  nrf24_cs_pin: 21
   cover_id: directolor_shade
   cover_name: Upper Shades Right
   cover_movement_duration: 0s
@@ -9,10 +14,15 @@ substitutions:
   cover_tilt_supported: false
   cover_favorite_support: false
   cover_program_support: false
+
+nrf24l01_base:
+  id: nrf24l01
+  ce_pin: ${nrf24_ce_pin}
+  cs_pin: ${nrf24_cs_pin}
   
 cover:
   - platform: directolor_cover
-    base: ${nrf24l01base_id}
+    base: nrf24l01
     id: $cover_id
     name: $cover_name
     radio_code:   #0x11, 0x11, 0xB9, 0x7B
