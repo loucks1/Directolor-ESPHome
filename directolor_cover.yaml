@@ -10,13 +10,13 @@ substitutions:
   id: directolor_shade
   name: Directolor Shade
   movement_duration: 0s
-  channel: 3
+  channel: 1
   tilt_supported: false
   favorite_support: false
   program_support: false
   radio_code:
       - 0x06
-      - 0x04
+      - 0x03
       - 0x05
       - 0x12
       
