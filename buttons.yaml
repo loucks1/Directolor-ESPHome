@@ -8,10 +8,6 @@ substitutions:
   button1_action_id: button1_action  # e.g., toggle a light with this ID
   button2_action_id: button2_action  # e.g., toggle another entity
 
-esphome:
-  includes:
-    - buttons_package.h  # Optional: If you need custom C++ logic, create this header
-
 button:
   # Button 1: Configurable name and on_press action
   - platform: template
