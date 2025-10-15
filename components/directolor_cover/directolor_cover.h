@@ -27,6 +27,7 @@ namespace esphome
       void set_channel(int channel) { this->channel_ = channel; }
       void set_favorite_support(bool favorite_enabled) { this->favorite_support_ = favorite_enabled; }
       void set_program_function_support(bool program_function_support) { this->program_function_support_ = program_function_support; }
+      void issue_shade_command(BlindAction blind_action, int copies);
 
       void dump_config() override;
       cover::CoverTraits get_traits() override;
@@ -40,7 +41,6 @@ namespace esphome
       int get_group_radio_command(uint8_t *payload, BlindAction blind_action);
       int get_duplicate_radio_command(uint8_t *payload, BlindAction blind_action);
       int get_set_fav_radio_command(uint8_t *payload, BlindAction blind_action);
-      void issue_shade_command(BlindAction blind_action, int copies);
       uint8_t radio_code_[4];
       uint8_t command_random_;
       uint32_t movement_duration_ms_ = 0;
