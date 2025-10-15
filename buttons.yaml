@@ -5,14 +5,13 @@ substitutions:
   button2_name: "Default Button 2"  # Override in main YAML
   
   # Optional: IDs for actions (e.g., reference other entities)
-  button1_action_id: button3_action  # e.g., toggle a light with this ID
-  button2_action_id: button4_action  # e.g., toggle another entity
-
+  button3_action_id: button3_action  # e.g., toggle a light with this ID
+  button4_action_id: button4_action  # e.g., toggle another entity4
 button:
   # Button 1: Configurable name and on_press action
   - platform: template
     name: ${button1_name}
-    id: ${button1_action_id}
+    id: ${button3_action_id}
     on_press:
       - logger.log: "Button 1 pressed!"
       # Add more actions here, e.g.:
@@ -21,7 +20,7 @@ button:
   # Button 2: Similar to Button 1
   - platform: template
     name: ${button2_name}
-    id: button2_action  # Fixed ID for simplicity; make substitutable if needed
+    id: ${button4_action_id}  # Fixed ID for simplicity; make substitutable if needed
     on_press:
       - logger.log: "Button 2 pressed!"
       # Example: - light.toggle: another_light
