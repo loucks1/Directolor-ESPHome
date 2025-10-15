@@ -33,3 +33,12 @@ cover:
     movement_duration: ${cover_movement_duration}
     channel: ${cover_channel}
     tilt_supported: ${cover_tilt_supported}
+
+button:
+  - platform: template
+    name: "${cover_name} to favorite"
+    disabled_by_default: ${cover_favorite_support}
+    on_press:
+      then:
+        - lambda: id($cover_id)->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
+        
