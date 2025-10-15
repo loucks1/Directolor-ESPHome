@@ -30,6 +30,6 @@ cover:
       - 0x11
       - 0xB9
       - 0x7B
-    movement_duration: ${movement_duration}
+    movement_duration: ${cover_movement_duration}
     channel: ${cover_channel}
     tilt_supported: ${cover_tilt_supported}
