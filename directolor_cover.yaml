@@ -28,8 +28,8 @@ nrf24l01_base:
 cover:
   - platform: directolor_cover
     base: nrf24l01
-    id: $id
-    name: $name
+    id: ${id}
+    name: ${name}
     radio_code: ${radio_code}
     movement_duration: ${movement_duration}
     channel: ${channel}
