@@ -35,6 +35,7 @@ namespace esphome
       void loop() override;
 
       void sendJoin();
+      void toFavorite();
 
     protected:
       esphome::nrf24l01_base::Nrf24l01_base *base_;

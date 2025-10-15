@@ -33,6 +33,11 @@ namespace esphome
             return traits;
         }
 
+        void toFavorite()
+        {
+            this->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
+        }
+
         void DirectolorCover::loop()
         {
             if (this->outstanding_send_attempts_ > 0)
