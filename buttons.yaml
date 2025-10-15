@@ -1,0 +1,31 @@
+# buttons.yaml - Simple package for two configurable buttons
+
+substitutions:
+  button1_name: "Default Button 1"  # Override in main YAML
+  button2_name: "Default Button 2"  # Override in main YAML
+  
+  # Optional: IDs for actions (e.g., reference other entities)
+  button1_action_id: button1_action  # e.g., toggle a light with this ID
+  button2_action_id: button2_action  # e.g., toggle another entity
+
+esphome:
+  includes:
+    - buttons_package.h  # Optional: If you need custom C++ logic, create this header
+
+button:
+  # Button 1: Configurable name and on_press action
+  - platform: template
+    name: ${button1_name}
+    id: ${button1_action_id}
+    on_press:
+      - logger.log: "Button 1 pressed!"
+      # Add more actions here, e.g.:
+      # - switch.toggle: light.my_light  # If you define a light elsewhere
+
+  # Button 2: Similar to Button 1
+  - platform: template
+    name: ${button2_name}
+    id: button2_action  # Fixed ID for simplicity; make substitutable if needed
+    on_press:
+      - logger.log: "Button 2 pressed!"
+      # Example: - light.toggle: another_light
