@@ -34,9 +34,6 @@ namespace esphome
       void setup() override;
       void loop() override;
 
-      void sendJoin();
-      void toFavorite();
-
     protected:
       esphome::nrf24l01_base::Nrf24l01_base *base_;
       int get_radio_command(uint8_t *payload, BlindAction blind_action);
