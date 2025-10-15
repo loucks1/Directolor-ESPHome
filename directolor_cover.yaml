@@ -39,7 +39,7 @@ button:
   - platform: template
     id: "${id}_to_favorite"
     name: "${name} to favorite"
-    disabled_by_default: !${favorite_support}
+    disabled_by_default: ${favorite_support}
     on_press:
       then:
         - lambda: id(${id})->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
