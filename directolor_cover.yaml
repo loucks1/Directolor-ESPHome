@@ -7,20 +7,19 @@ external_components:
 substitutions:
   nrf24_ce_pin: 22
   nrf24_cs_pin: 21
-  cover_id: directolor_shade
-  cover_name: Upper Shades Right
-  cover_movement_duration: 0s
-  cover_channel: 3
-  cover_tilt_supported: false
-  cover_favorite_support: false
-  cover_program_support: false
+  id: directolor_shade
+  name: Directolor Shade
+  movement_duration: 0s
+  channel: 3
+  tilt_supported: false
+  favorite_support: false
+  program_support: false
   radio_code:
-      - 0x11
-      - 0x11
-      - 0xB9
-      - 0x7B
-  
-
+      - 0x06
+      - 0x04
+      - 0x05
+      - 0x12
+      
 nrf24l01_base:
   id: nrf24l01
   ce_pin: ${nrf24_ce_pin}
@@ -29,23 +28,22 @@ nrf24l01_base:
 cover:
   - platform: directolor_cover
     base: nrf24l01
-    id: $cover_id
-    name: $cover_name
+    id: $id
+    name: $name
     radio_code: ${radio_code}
-    movement_duration: ${cover_movement_duration}
-    channel: ${cover_channel}
-    tilt_supported: ${cover_tilt_supported}
+    movement_duration: ${movement_duration}
+    channel: ${channel}
+    tilt_supported: ${tilt_supported}
 
 button:
   - platform: template
-    name: "${cover_name} test close"
+    name: "${name} test close"
     on_press:
       then:
-        - lambda: id($cover_id)->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS);
+        - lambda: id(${id})->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS);
   - platform: template
-    name: "${cover_name} to favorite"
-    disabled_by_default: !${cover_favorite_support}
+    name: "${name} to favorite"
+    disabled_by_default: !${favorite_support}
     on_press:
       then:
-        - lambda: id($cover_id)->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
-        
+        - lambda: id(${id})->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
