@@ -39,6 +39,7 @@ button:
   - platform: template
     id: "${id}_to_favorite"
     name: "${name} to favorite"
+    icon: none 
     disabled_by_default: ${disable_favorite_support}
     on_press:
       then:
@@ -46,6 +47,7 @@ button:
   - platform: template
     id: "${id}_set_favorite"
     name: "${name} set favorite"
+    icon: none 
     disabled_by_default: ${disable_favorite_support}
     on_press:
       then:
@@ -53,6 +55,7 @@ button:
   - platform: template
     id: "${id}_duplicate"
     name: "${name} Duplicate"
+    icon: none 
     disabled_by_default: ${disable_program_support}
     on_press:
       then:
@@ -60,6 +63,7 @@ button:
   - platform: template
     id: "${id}_join"
     name: "${name} Join"
+    icon: none 
     disabled_by_default: ${disable_program_support}
     on_press:
       then:
@@ -67,6 +71,7 @@ button:
   - platform: template
     id: "${id}_remove"
     name: "${name} Remove"
+    icon: none 
     disabled_by_default: ${disable_program_support}
     on_press:
       then:
