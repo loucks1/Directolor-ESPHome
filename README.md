@@ -74,8 +74,6 @@ packages:
           movement_duration: 17s
           disable_favorite_support: false
           disable_program_support: false
-    ref: IssueWithFavoriteAndProgram 
-    refresh: 2s
 ```
 
 
