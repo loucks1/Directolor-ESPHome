@@ -51,6 +51,6 @@ namespace esphome
 
       unsigned long start_of_timed_movement_;
       int ms_duration_for_delayed_stop_;
-    }
-  } // namespace directolor_cover
+    };
+  }; // namespace directolor_cover
 } // namespace esphome
