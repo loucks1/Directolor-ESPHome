@@ -31,9 +31,7 @@ CONFIG_SCHEMA = cover.cover_schema(DirectolorCover).extend({
     cv.Optional("movement_duration", default="0s"): cv.positive_time_period_seconds,  # Duration in seconds
     cv.Required("channel"): cv.int_range(min=1, max=63),  # Required channel 1-6
     cv.Optional("tilt_supported", default=False): cv.boolean,  # Optional tilt support, defaults to false
-    cv.Optional("favorite_support", default=False): cv.boolean,
-    cv.Optional("program_support", default=True): cv.boolean,
-}).extend(cv.COMPONENT_SCHEMA)
+ ).extend(cv.COMPONENT_SCHEMA)
 
 # Generate C++ code
 async def to_code(config):
@@ -45,5 +43,3 @@ async def to_code(config):
     cg.add(var.set_movement_duration(config["movement_duration"]))
     cg.add(var.set_tilt_supported(config["tilt_supported"]))
     cg.add(var.set_channel(config["channel"]))
-    cg.add(var.set_favorite_support(config["favorite_support"]))
-    cg.add(var.set_program_function_support(config["program_support"]))
