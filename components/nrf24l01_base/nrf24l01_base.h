@@ -67,7 +67,7 @@ namespace esphome
       bool learningRemote;
       unsigned long lastMillis;
       unsigned long lastStartAttempt;
-      unsigned long currentCooldown = 1875;
+      unsigned long currentCooldown = 513;
 
       PayloadQueue queue_;
       PayloadEntry current_sending_payload_;
