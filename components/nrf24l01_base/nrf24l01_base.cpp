@@ -27,6 +27,15 @@ namespace esphome
 
       if (!this->radioValid)
       {
+        if (millis() - this->lastStartAttempt < currentCooldown)
+        {
+          if (currentCooldown < 60000)
+            currentCooldown *= 2; // back off up to 1 minute
+          return false; // don't try to restart too often        
+        }
+        
+        lastStartAttempt = millis();
+        
         if (!radioInitialized)
         {
           this->radio = RF24(this->ce_pin_, this->cs_pin_, RF24_SPI_SPEED);
