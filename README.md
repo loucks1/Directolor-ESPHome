@@ -25,52 +25,55 @@ Copy the bytes from your remote into the radio_code below, keeping the same posi
 
 You've now cloned your remote into directolor.  Test that you can control your shades via the web interface buttons. 
 
-You must include the external_components: once<br>
-You must include the nrf24l01_base component once.  The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.<br>
-You can include multiple "- platform: directolor_cover" sections, you will typically have one for each shade.<br>
-&emsp;Make sure the <b>base</b> value is whatever id you gave to nf24l01_base (<b>nrf24l01</b> in my example below)<br>
+You can include multiple "- path: directolor_cover.yaml" sections, you will typically have one for each shade.<br>
+For the vars: <br>
 &emsp;<b>id</b> is any valid ESPHome id<br>
-&emsp;<b>name</b> is the name you'd like it to have (set web_server: to version: 3 if it doesn't show the name in the UI)<br>
+&emsp;<b>name</b> is the name you'd like it to have<br>
 &emsp;<b>radio_code</b> - see above or just put random values (hex) in here and join your blinds to it<br>
 &emsp;<b>channel</b> - the number of the blind on your remote<br>
 &emsp;<b>movement_duration</b> - a time value that tells how long it takes to fully open / close the blind.  If you leave this out, you will NOT get positional control of your blind, just open / close<br>
 &emsp;<b>tilt_supported</b> - whether or not the blind has tilt functions<br>
-&emsp;<b>favorite_support</b> - whether or not to create the buttons to set and go to the favorite position of the blind<br>
-&emsp;<b>program_support</b> - whether or not to create the buttons to allow join, remove and duplicate for this blind (radio_code / channel combination)<br>
+&emsp;<b>disable_favorite_support</b> - setting this to true will mark the "to favorite" and "set favorite" buttons as disabled in Home Assistant (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3<br>
+&emsp;<b>disable_program_support</b> - setting this to true will mark the "duplicate", "join" and "remove" buttons as disabled in Home Assistant (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3<br>
 
-You <b>MUST</b> include a button in your configuration otherwise the compilation will fail with a bunch of:  "class esphome::Application' has no member named 'register_button" errors.  I've included a restart button example that you can use at the end of the example configuration below
+The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.  If you change them, make sure to specify them for each vars section<br>
+&emsp;<b>nrf24_ce_pin</b> - defaults to 22 if not provided<br>
+&emsp;<b>nrf24_cs_pin</b> - defaults to 21 if not provided<br>
 
 ```yaml
 # example configuration:
 
-external_components:
-  source: github://loucks1/Directolor-ESPHome
-
-nrf24l01_base:
-  id: nrf24l01
-  ce_pin: 22
-  cs_pin: 21
-
-cover:
-  - platform: directolor_cover
-    base: nrf24l01
-    id: my_directolor_cover
-    name: My Directolor Cover
-    radio_code:   #05 06 13 04
-      - 0x05
-      - 0x06
-      - 0x13
-      - 0x04
-    channel: 1
-    movement_duration: 16s
-    tilt_supported: true  
-    favorite_support: true
-    program_support: true
-
-button:
-  - platform: restart
-    icon: mdi:power-cycle
-    name: "ESP Reboot"
+packages:
+  directolor:
+    url:  https://github.com/loucks1/Directolor-ESPHome
+    files:
+      - path: directolor_cover.yaml
+        vars:
+          id: blind1
+          name: Directolor Blind 1
+          radio_code: 
+            - 0x06
+            - 0x03
+            - 0x05
+            - 0x12
+          tilt_supported: true
+          channel: 1
+          disable_favorite_support: true
+          disable_program_support: true
+      - path: directolor_cover.yaml
+        vars:
+          id: blind2
+          name: Directolor Blind 2
+          radio_code: 
+            - 0x06
+            - 0x03
+            - 0x05
+            - 0x12
+          tilt_supported: false
+          channel: 2
+          movement_duration: 17s
+          disable_favorite_support: false
+          disable_program_support: false
 ```
 
 

@@ -1,0 +1,77 @@
+# buttons.yaml - Simple package for two configurable buttons
+
+external_components:
+  source: github://loucks1/Directolor-ESPHome
+
+substitutions:
+  nrf24_ce_pin: 22
+  nrf24_cs_pin: 21
+  id: directolor_shade
+  name: Directolor Shade
+  movement_duration: 0s
+  channel: 1
+  tilt_supported: false
+  disable_favorite_support: false
+  disable_program_support: false
+  radio_code:
+      - 0x06
+      - 0x03
+      - 0x05
+      - 0x12
+      
+nrf24l01_base:
+  id: nrf24l01
+  ce_pin: ${nrf24_ce_pin}
+  cs_pin: ${nrf24_cs_pin}
+  
+cover:
+  - platform: directolor_cover
+    base: nrf24l01
+    id: ${id}
+    name: ${name}
+    radio_code: ${radio_code}
+    movement_duration: ${movement_duration}
+    channel: ${channel}
+    tilt_supported: ${tilt_supported}
+
+button:
+  - platform: template
+    id: "${id}_to_favorite"
+    name: "${name} to favorite"
+    icon: mdi:star 
+    disabled_by_default: ${disable_favorite_support}
+    on_press:
+      then:
+        - lambda: id(${id})->issue_shade_command(directolor_toFav, DIRECTOLOR_CODE_ATTEMPTS);
+  - platform: template
+    id: "${id}_set_favorite"
+    name: "${name} set favorite"
+    icon: mdi:star-plus
+    disabled_by_default: ${disable_favorite_support}
+    on_press:
+      then:
+        - lambda: id(${id})->issue_shade_command(directolor_setFav, DIRECTOLOR_CODE_ATTEMPTS);
+  - platform: template
+    id: "${id}_duplicate"
+    name: "${name} Duplicate"
+    icon: mdi:content-duplicate
+    disabled_by_default: ${disable_program_support}
+    on_press:
+      then:
+        - lambda: id(${id})->issue_shade_command(directolor_duplicate, DIRECTOLOR_CODE_ATTEMPTS);
+  - platform: template
+    id: "${id}_join"
+    name: "${name} Join"
+    icon: mdi:plus
+    disabled_by_default: ${disable_program_support}
+    on_press:
+      then:
+        - lambda: id(${id})->issue_shade_command(directolor_join, DIRECTOLOR_CODE_ATTEMPTS);
+  - platform: template
+    id: "${id}_remove"
+    name: "${name} Remove"
+    icon: mdi:selection-ellipse-remove
+    disabled_by_default: ${disable_program_support}
+    on_press:
+      then:
+        - lambda: id(${id})->issue_shade_command(directolor_remove, DIRECTOLOR_CODE_ATTEMPTS);
