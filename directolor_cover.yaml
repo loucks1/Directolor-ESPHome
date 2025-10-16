@@ -39,7 +39,7 @@ button:
   - platform: template
     id: "${id}_to_favorite"
     name: "${name} to favorite"
-    icon: none 
+    icon: mdi:GestureTap 
     disabled_by_default: ${disable_favorite_support}
     on_press:
       then:
@@ -47,7 +47,7 @@ button:
   - platform: template
     id: "${id}_set_favorite"
     name: "${name} set favorite"
-    icon: none 
+    icon: mdi:GestureTap 
     disabled_by_default: ${disable_favorite_support}
     on_press:
       then:
@@ -55,7 +55,7 @@ button:
   - platform: template
     id: "${id}_duplicate"
     name: "${name} Duplicate"
-    icon: none 
+    icon: mdi:GestureTap 
     disabled_by_default: ${disable_program_support}
     on_press:
       then:
@@ -63,7 +63,7 @@ button:
   - platform: template
     id: "${id}_join"
     name: "${name} Join"
-    icon: none 
+    icon: mdi:GestureTap 
     disabled_by_default: ${disable_program_support}
     on_press:
       then:
@@ -71,7 +71,7 @@ button:
   - platform: template
     id: "${id}_remove"
     name: "${name} Remove"
-    icon: none 
+    icon: mdi:GestureTap 
     disabled_by_default: ${disable_program_support}
     on_press:
       then:
