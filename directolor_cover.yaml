@@ -1,8 +1,7 @@
 # buttons.yaml - Simple package for two configurable buttons
 
 external_components:
-  source: github://loucks1/Directolor-ESPHome@IssueWithFavoriteAndProgram
-  refresh: 1s
+  source: github://loucks1/Directolor-ESPHome
 
 substitutions:
   nrf24_ce_pin: 22
