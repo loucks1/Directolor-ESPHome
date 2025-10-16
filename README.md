@@ -36,7 +36,7 @@ For the vars: <br>
 &emsp;<b>disable_favorite_support</b> - setting this to true will mark the "to favorite" and "set favorite" buttons as disabled in Home Assistant (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3<br>
 &emsp;<b>disable_program_support</b> - setting this to true will mark the "duplicate", "join" and "remove" buttons as disabled in Home Assistant (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3<br>
 
-The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.  Specify them for each  <br>
+The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.  If you change them, make sure to specify them for each vars section<br>
 &emsp;<b>nrf24_ce_pin</b> - defaults to 22 if not provided<br>
 &emsp;<b>nrf24_cs_pin</b> - defaults to 21 if not provided<br>
 
