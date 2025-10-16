@@ -39,7 +39,7 @@ button:
   - platform: template
     id: "${id}_to_favorite"
     name: "${name} to favorite"
-    icon: mdi:GestureTap 
+    icon: mdi:star 
     disabled_by_default: ${disable_favorite_support}
     on_press:
       then:
@@ -47,7 +47,7 @@ button:
   - platform: template
     id: "${id}_set_favorite"
     name: "${name} set favorite"
-    icon: mdi:GestureTap 
+    icon: mdi:gesturetap 
     disabled_by_default: ${disable_favorite_support}
     on_press:
       then:
