@@ -13,7 +13,6 @@ namespace esphome
     {
       ESP_LOGI(TAG, "setup called");
 
-      this->enterRemoteSearchMode();
       this->current_sending_payload_.send_attempts = 0;
     }
 
@@ -59,6 +58,7 @@ namespace esphome
           this->radio.closeReadingPipe(4);
           this->radio.closeReadingPipe(5);
           ESP_LOGI(TAG, "radio started");
+          this->enterRemoteSearchMode();
         }
         else
         {
