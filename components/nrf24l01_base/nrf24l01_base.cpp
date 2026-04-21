@@ -73,6 +73,7 @@ namespace esphome
     {
       if (this->radioStarted())
       {
+        ESP_LOGI(TAG, "attempting to start listening");
         this->radio.stopListening();
         this->radio.setAddressWidth(5);
         this->radio.openReadingPipe(1, 0x5555555555); // always uses pipe 0
@@ -81,6 +82,7 @@ namespace esphome
         this->learningRemote = true;
         this->radio.setPayloadSize(MAX_PAYLOAD_SIZE);
         memset(&this->remoteCode, 0, sizeof(remoteCode));
+        ESP_LOGI(TAG, "started listening");
         return true;
       }
       return false;
