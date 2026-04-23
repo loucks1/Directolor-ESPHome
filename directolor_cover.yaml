@@ -1,6 +1,5 @@
 external_components:
   source: github://loucks1/Directolor-ESPHome
-  ref: main
 
 substitutions:
   nrf24_ce_pin: 22
