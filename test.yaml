@@ -1,0 +1,43 @@
+esphome:
+  name: test-node
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Required for nrf24 to function
+spi:
+  - id: nrf24_spi
+    clk_pin: GPIO18
+    mosi_pin: GPIO23
+    miso_pin: GPIO19
+    interface: hardware
+
+external_components:
+  - source:
+      type: local
+      path: ./components
+    components: [ nrf24, directolor_cover ]
+
+nrf24:
+  - id: my_nrf_radio
+    spi_id: nrf24_spi    # Matches the SPI ID above
+    cs_pin: GPIO21
+    ce_pin: GPIO22
+    channel: 53
+    rf_datarate: "1MBPS"      # options: 250KBPS, 1MBPS, 2MBPS
+    pa_level: "MAX"         # MIN, LOW, HIGH, MAX
+    payload_size: 32        # default 32, can be smaller
+    data_rate: 2MHz
+
+cover:
+  - platform: directolor_cover
+    id: test_shade
+    name: "Test"
+    nrf24_id: my_nrf_radio
+    radio_code: [0x11, 0x11, 0x38, 0x28]
+    channel: 1
+
+logger:
+  level: DEBUG

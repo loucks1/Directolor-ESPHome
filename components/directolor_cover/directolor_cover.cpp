@@ -1,19 +1,21 @@
 #include "directolor_cover.h"
 #include <esphome/core/log.h>
 #include "esphome.h"
+#include "esp_random.h"
 #include <string>
-
-#define MS_FOR_FULL_TILT_MOVEMENT 5000
 
 namespace esphome
 {
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
+        static const uint8_t MATCHPATTERN[4] = {0xC0, 0X11, 0X00, 0X05}; // this is what we use to find out the codes for a new remote
+        static inline uint32_t last_millis = 0;
 
         void DirectolorCover::dump_config()
         {
             ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", this->name_.c_str());
+            this->radio_->dump_config();
         }
 
         cover::CoverTraits DirectolorCover::get_traits()
@@ -26,48 +28,60 @@ namespace esphome
             return traits;
         }
 
+        void DirectolorCover::process_outstanding_send_attempts()
+        {
+            BlindAction curr_action = this->current_action_;
+
+            if ((curr_action == directolor_join || curr_action == directolor_remove) && (outstanding_send_attempts_ % 2 == 0))
+            {
+                curr_action = directolor_duplicate;
+            }
+
+            this->outstanding_send_attempts_--;
+            uint8_t payload[this->radio_->getPayloadSize()];
+
+            int length = this->get_radio_command(payload, curr_action);
+
+            uint16_t crc = crc16be((uint8_t *)payload, length, 0xFFFF, 0x755b, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
+            ESP_LOGV(TAG, "payload: %s  crc: 0x%04X", format_hex_pretty(payload, length).c_str(), crc);
+            payload[length++] = crc >> 8;
+            payload[length] = crc & 0xFF;
+
+            for (int i = this->radio_->getPayloadSize(); i > 0; i--) // pad with leading 0x55 to train the shade receivers
+            {
+                if (i - (this->radio_->getPayloadSize() - length) >= 0)
+                    payload[i - 1] = payload[i - (this->radio_->getPayloadSize() - length)];
+                else
+                    payload[i - 1] = 0x55;
+            }
+
+            this->sendPayload(payload);
+        }
+
+        uint32_t last_heartbeat = 0;
+
         void DirectolorCover::loop()
         {
+            this->checkRadioPayload();
             if (this->outstanding_send_attempts_ > 0)
             {
-                BlindAction curr_action = this->current_action_;
-
-                if ((curr_action == directolor_join || curr_action == directolor_remove) && (outstanding_send_attempts_ % 2 == 0))
-                {
-                    curr_action = directolor_duplicate;
-                }
-
-                this->outstanding_send_attempts_--;
-                uint8_t payload[MAX_PAYLOAD_SIZE];
-
-                int length = this->get_radio_command(payload, curr_action);
-
-                uint16_t crc = calcCRC16((uint8_t *)payload, length, 0x755b, 0xFFFF, 0, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
-                payload[length++] = crc >> 8;
-                payload[length] = crc & 0xFF;
-
-                for (int i = MAX_PAYLOAD_SIZE; i > 0; i--) // pad with leading 0x55 to train the shade receivers
-                {
-                    if (i - (MAX_PAYLOAD_SIZE - length) >= 0)
-                        payload[i - 1] = payload[i - (MAX_PAYLOAD_SIZE - length)];
-                    else
-                        payload[i - 1] = 0x55;
-                }
-
-                this->base_->sendPayload(payload);
+                process_outstanding_send_attempts();
             }
 
             if (this->ms_duration_for_delayed_stop_ != 0 && (millis() - this->start_of_timed_movement_ >= this->ms_duration_for_delayed_stop_))
             {
-                this->issue_shade_command(directolor_stop, DIRECTOLOR_CODE_ATTEMPTS);
+                this->issue_shade_command(directolor_stop);
                 this->ms_duration_for_delayed_stop_ = 0;
             }
+            this->send_code();
         }
 
         void DirectolorCover::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
-            this->command_random_ = random(256);
+            this->current_sending_payload_.send_attempts = 0;
+            this->command_random_ = esp_random() % 256;
+            this->radioValid = false;
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
@@ -78,11 +92,11 @@ namespace esphome
                 float pos = *call.get_position();
                 if (pos == cover::COVER_OPEN)
                 {
-                    this->issue_shade_command(directolor_open, DIRECTOLOR_CODE_ATTEMPTS); // Open command
+                    this->issue_shade_command(directolor_open); // Open command
                 }
                 else if (pos == cover::COVER_CLOSED)
                 {
-                    this->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS); // Close command
+                    this->issue_shade_command(directolor_close); // Close command
                 }
                 else if (pos == this->position)
                 {
@@ -91,9 +105,9 @@ namespace esphome
                 else
                 {
                     if (this->position > pos)
-                        this->issue_shade_command(directolor_close, DIRECTOLOR_CODE_ATTEMPTS); // Close command
+                        this->issue_shade_command(directolor_close); // Close command
                     else
-                        this->issue_shade_command(directolor_open, DIRECTOLOR_CODE_ATTEMPTS); // Open command
+                        this->issue_shade_command(directolor_open); // Open command
                     ESP_LOGD(TAG, "current position %.2f requested position %.2f total seconds for movement %d", this->position, pos, this->movement_duration_ms_);
                     this->ms_duration_for_delayed_stop_ = this->movement_duration_ms_ * abs(this->position - pos);
                     ESP_LOGD(TAG, "desiredDelay: %d", ms_duration_for_delayed_stop_);
@@ -108,7 +122,7 @@ namespace esphome
 
             if (call.get_stop())
             {
-                this->issue_shade_command(directolor_stop, DIRECTOLOR_CODE_ATTEMPTS);
+                this->issue_shade_command(directolor_stop);
             }
 
             if (call.get_tilt())
@@ -116,11 +130,11 @@ namespace esphome
                 float tilt = *call.get_tilt();
                 if (tilt == 0)
                 {
-                    this->issue_shade_command(directolor_tiltClose, DIRECTOLOR_CODE_ATTEMPTS);
+                    this->issue_shade_command(directolor_tiltClose);
                 }
                 else if (tilt == 1)
                 {
-                    this->issue_shade_command(directolor_tiltOpen, DIRECTOLOR_CODE_ATTEMPTS);
+                    this->issue_shade_command(directolor_tiltOpen);
                 }
                 else
                 {
@@ -130,9 +144,9 @@ namespace esphome
                         return;
                     }
                     if (this->tilt > tilt)
-                        this->issue_shade_command(directolor_tiltClose, DIRECTOLOR_CODE_ATTEMPTS);
+                        this->issue_shade_command(directolor_tiltClose);
                     else
-                        this->issue_shade_command(directolor_tiltOpen, DIRECTOLOR_CODE_ATTEMPTS);
+                        this->issue_shade_command(directolor_tiltOpen);
                     ESP_LOGD(TAG, "current tilt %.2f requested tilt %.2f total seconds for tilt %d", this->tilt, tilt, MS_FOR_FULL_TILT_MOVEMENT);
                     this->ms_duration_for_delayed_stop_ = MS_FOR_FULL_TILT_MOVEMENT * abs(this->tilt - tilt); // gives us the milliseconds of delay.
                     ESP_LOGD(TAG, "desiredDelay: %d", this->ms_duration_for_delayed_stop_);
@@ -165,12 +179,12 @@ namespace esphome
             }
         }
 
-        void DirectolorCover::issue_shade_command(BlindAction blind_action, int copies)
+        void DirectolorCover::issue_shade_command(BlindAction blind_action)
         {
             ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s, copies=%d",
-                     this->get_name().c_str(), blind_action_to_string(blind_action), copies);
+                     this->get_name().c_str(), blind_action_to_string(blind_action), this->message_send_repeats_);
             this->current_action_ = blind_action;
-            this->outstanding_send_attempts_ = copies;
+            this->outstanding_send_attempts_ = this->code_attempts_;
         }
 
         static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
@@ -277,7 +291,7 @@ namespace esphome
             const uint8_t offset = 0;
             int payloadOffset = 0;
             int j = 0;
-            while (j + payloadOffset < MAX_PAYLOAD_SIZE)
+            while (j + payloadOffset < this->radio_->getPayloadSize())
             {
                 switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
                 {
@@ -332,7 +346,7 @@ namespace esphome
             const uint8_t offset = 0;
             int payloadOffset = 0;
             int j = 0;
-            while (j + payloadOffset < MAX_PAYLOAD_SIZE)
+            while (j + payloadOffset < this->radio_->getPayloadSize())
             {
                 switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
                 {
@@ -376,6 +390,249 @@ namespace esphome
             }
 
             return sizeof(commandPrototype) + payloadOffset;
+        }
+
+        bool DirectolorCover::radioStarted()
+        {
+            //     if (this->radio_->failureDetected)
+            //     {
+            //         this->radioValid = false;
+            //         this->radio_->failureDetected = false;
+            //     }
+
+            if (!this->radioValid)
+            {
+                if (millis() - this->lastStartAttempt < currentCooldown)
+                    return false; // don't try to restart too often
+
+                if (currentCooldown < 60000)
+                    currentCooldown *= 2; // back off up to 1 minute
+
+                lastStartAttempt = millis();
+
+                ESP_LOGI(TAG, "attempting to start radio");
+
+                this->radioValid = this->radio_->begin();
+
+                if (this->radioValid)
+                {
+                    this->radio_->stop_listening();                          // make sure we're not still in listening mode from a previous session
+                    this->radio_->setAutoAck(false);                         // auto-ack has to be off or everything breaks because I haven't been able to RE the protocol CRC / validation
+                    this->radio_->setCRCLength(nRF24L01::RF24_CRC_DISABLED); // disable CRC
+
+                    ESP_LOGI(TAG, "radio started");
+                    this->enterRemoteSearchMode();
+                }
+                else
+                {
+                    ESP_LOGE(TAG, "Failure starting radio");
+                }
+            }
+
+            return this->radioValid;
+        }
+
+        bool DirectolorCover::enterRemoteSearchMode()
+        {
+            if (this->radioStarted())
+            {
+                ESP_LOGI(TAG, "attempting to start listening");
+                this->radio_->stop_listening();
+                this->radio_->set_address_width(5);
+                this->radio_->open_reading_pipe(1, 0x5555555555); // always uses pipe 0
+                ESP_LOGI(TAG, "searching for remote");
+                this->radio_->start_listening(); // put radio in RX mode
+                this->learningRemote = true;
+                memset(&this->remoteCode, 0, sizeof(remoteCode));
+                ESP_LOGI(TAG, "started listening - press a button on your remote");
+                if (esp_log_get_default_level() >= ESP_LOG_VERBOSE)
+                {
+                    this->dump_config();
+                }
+                return true;
+            }
+            return false;
+        }
+
+        void DirectolorCover::enterRemoteCaptureMode()
+        {
+            if (this->remoteCode.radioCode[0] || this->remoteCode.radioCode[1])
+            {
+                this->radio_->stop_listening();
+                this->radio_->set_address_width(3);
+
+                uint8_t capture_addr[3];
+                capture_addr[2] = this->remoteCode.radioCode[0];
+                capture_addr[1] = this->remoteCode.radioCode[1];
+                capture_addr[0] = 0xC0;
+                this->radio_->open_reading_pipe(1, capture_addr);
+
+                this->radio_->start_listening(); // put radio in RX mode
+                ESP_LOGI(TAG, "Now listening for 3-byte payloads on address: [%02X, %02X, %02X]",
+                         capture_addr[0], capture_addr[1], capture_addr[2]);
+            }
+            else if (learningRemote)
+            {
+                enterRemoteSearchMode();
+            }
+            else
+            {
+                this->radio_->powerDown();
+            }
+        }
+
+        void DirectolorCover::sendPayload(uint8_t *payload)
+        {
+            this->queue_.enqueue(payload, this->message_send_repeats_);
+        }
+
+        void DirectolorCover::send_code()
+        {
+            if (!this->radioStarted())
+                return;
+            if (this->current_sending_payload_.send_attempts == 0)
+            {
+                if (queue_.dequeue(this->current_sending_payload_))
+                {
+                    ESP_LOGV(TAG, "Processing - send_attempts: %d: %s",
+                             this->current_sending_payload_.send_attempts,
+                             format_hex_pretty(this->current_sending_payload_.payload, 32).c_str());
+
+                    this->radio_->powerUp();
+                    this->radio_->stop_listening(); // put radio in TX mode
+                    this->radio_->set_address_width(3);
+                    this->radio_->open_writing_pipe(0x060406);
+                    //                    this->radio_->set_payload_size(MAX_PAYLOAD_SIZE);  //TOdo; remove
+                }
+            }
+            else
+            {
+                ESP_LOGV(TAG, "sending code (attempts left: %d)", this->current_sending_payload_.send_attempts);
+
+                unsigned long startMillis = millis();
+                while (--this->current_sending_payload_.send_attempts > 0)
+                {
+                    this->radio_->writeFast(this->current_sending_payload_.payload, this->radio_->getPayloadSize(), true); // we aren't waiting for an ACK, so we need to writeFast with multiCast set to true
+                    if (this->current_sending_payload_.send_attempts % 3 == 0)
+                    {
+                        this->radio_->txStandBy();
+                        if (millis() - startMillis > 25)
+                            break;
+                    }
+                }
+                this->radio_->txStandBy();
+                if (this->current_sending_payload_.send_attempts == 0)
+                {
+                    ESP_LOGV(TAG, "send code complete");
+                    if (!queue_.dequeue(this->current_sending_payload_))
+                        this->enterRemoteCaptureMode(); // go back and power down
+                }
+            }
+        }
+
+        void DirectolorCover::checkRadioPayload() // could modify this to allow capture if commands were sent using multiple channels
+        {
+            if (this->radioStarted())
+            {
+                uint8_t pipe;
+                if (this->radio_->available(&pipe))
+                {
+                    uint8_t bytes = this->radio_->getPayloadSize(); // get the size of the payload
+                    char payload[bytes];
+                    this->radio_->read(payload, bytes); // fetch payload from FIFO
+
+                    if (this->learningRemote)
+                    {
+                        ESP_LOGV(TAG, "checking payload for match: %s", format_hex_pretty(reinterpret_cast<const uint8_t *>(payload), bytes).c_str());
+
+                        uint8_t foundPattern = 0;
+
+                        for (int i = 0; i < bytes; i++)
+                        {
+                            if (payload[i] != MATCHPATTERN[foundPattern])
+                                foundPattern = 0;
+                            else
+                                foundPattern++;
+
+                            if (foundPattern > 3 && i > 4)
+                            {
+                                this->remoteCode.radioCode[0] = payload[i - 5];
+                                this->remoteCode.radioCode[1] = payload[i - 4];
+                                this->remoteCode.radioCode[2] = payload[i + 4];
+                                this->remoteCode.radioCode[3] = payload[i + 5];
+                                this->learningRemote = false;
+                                ESP_LOGI(TAG, "Found Remote with address: [0x%02X, 0x%02X, 0x%02X, 0x%02X]",
+                                         this->remoteCode.radioCode[0], this->remoteCode.radioCode[1], this->remoteCode.radioCode[2], this->remoteCode.radioCode[3]);
+                                this->enterRemoteCaptureMode();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bytes = payload[0] + 4;
+                        if (bytes > 32)
+                            return; // invalid payload - discarding
+#ifdef DIRECTOLOR_CAPTURE_FIRST
+                        bool skip = (millis() - last_millis < 25);
+                        last_millis = millis();
+                        if (skip)
+                            return;
+#endif
+
+                        const char *command = "ERROR";
+
+                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x86)
+                            switch (payload[bytes - 5])
+                            {
+                            case directolor_open:
+                                command = "Open";
+                                break;
+                            case directolor_close:
+                                command = "Close";
+                                break;
+                            case directolor_tiltOpen:
+                                command = "Tilt Open";
+                                break;
+                            case directolor_tiltClose:
+                                command = "Tilt Close";
+                                break;
+                            case directolor_stop:
+                                command = "Stop";
+                                break;
+                            case directolor_toFav:
+                                command = "to Fav";
+                                break;
+                            case directolor_setFav:
+                                command = "Store Favorite";
+                            }
+
+                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x08)
+                        {
+                            switch (payload[bytes - 4])
+                            {
+                            case directolor_join:
+                                command = "Join";
+                                break;
+                            case directolor_remove:
+                                command = "Remove";
+                                break;
+                            }
+                        }
+
+                        if (payload[0] == 0x12 && payload[1] == 0x80 && payload[2] == 0x0D && payload[4] == 0xFF && payload[5] == 0xFF && payload[16] == this->remoteCode.radioCode[2] && payload[17] == this->remoteCode.radioCode[3] && payload[18] == 0xC8)
+                            command = "Duplicate";
+
+                        if (command == "ERROR")
+                            return;
+
+                        ESP_LOGV(TAG, "bytes: %d pipe: %d: %s",
+                                 bytes,
+                                 pipe,
+                                 format_hex_pretty(reinterpret_cast<const uint8_t *>(payload), bytes).c_str());
+                        ESP_LOGI(TAG, "Received %s from: %s", command, format_hex(this->remoteCode.radioCode, 4).c_str());
+                    }
+                }
+            }
         }
 
     } // namespace directolor_cover
