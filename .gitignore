@@ -4,3 +4,6 @@
 /.esphome/
 /secrets.yaml
 /__pycache__/
+components/directolor_cover/__pycache__/__init__.cpython-312.pyc
+components/directolor_cover/__pycache__/cover.cpython-312.pyc
+components/nrf24/__pycache__/__init__.cpython-312.pyc

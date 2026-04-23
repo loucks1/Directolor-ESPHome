@@ -68,11 +68,6 @@ namespace esphome
                 process_outstanding_send_attempts();
             }
 
-            if (this->ms_duration_for_delayed_stop_ != 0 && (millis() - this->start_of_timed_movement_ >= this->ms_duration_for_delayed_stop_))
-            {
-                this->issue_shade_command(directolor_stop);
-                this->ms_duration_for_delayed_stop_ = 0;
-            }
             this->send_code();
         }
 
@@ -86,17 +81,20 @@ namespace esphome
 
         void DirectolorCover::control(const cover::CoverCall &call)
         {
-            this->ms_duration_for_delayed_stop_ = 0;
+            // Kill any existing timer immediately when a new command arrives
+            this->cancel_timeout("delayed_stop");
+
             if (call.get_position().has_value())
             {
                 float pos = *call.get_position();
+
                 if (pos == cover::COVER_OPEN)
                 {
-                    this->issue_shade_command(directolor_open); // Open command
+                    this->issue_shade_command(directolor_open);
                 }
                 else if (pos == cover::COVER_CLOSED)
                 {
-                    this->issue_shade_command(directolor_close); // Close command
+                    this->issue_shade_command(directolor_close);
                 }
                 else if (pos == this->position)
                 {
@@ -105,55 +103,65 @@ namespace esphome
                 else
                 {
                     if (this->position > pos)
-                        this->issue_shade_command(directolor_close); // Close command
+                        this->issue_shade_command(directolor_close);
                     else
-                        this->issue_shade_command(directolor_open); // Open command
-                    ESP_LOGD(TAG, "current position %.2f requested position %.2f total seconds for movement %d", this->position, pos, this->movement_duration_ms_);
-                    this->ms_duration_for_delayed_stop_ = this->movement_duration_ms_ * abs(this->position - pos);
-                    ESP_LOGD(TAG, "desiredDelay: %d", ms_duration_for_delayed_stop_);
-                    this->start_of_timed_movement_ = millis();
+                        this->issue_shade_command(directolor_open);
+
+                    uint32_t delay = static_cast<uint32_t>(this->movement_duration_ms_ * std::abs(this->position - pos));
+
+                    this->set_timeout("delayed_stop", delay, [this, pos, delay]()
+                                      { 
+                                        this->issue_shade_command(directolor_stop); 
+                                        ESP_LOGD(TAG, "Scheduled stop executed for %s", this->get_name().c_str()); });
+                    ESP_LOGD(TAG, "%s scheduled for stop after delay. Position: %.2f, Target: %.2f, Delay: %u ms", this->get_name().c_str(), this->position, pos, delay);
                 }
 
                 this->position = pos;
                 if (this->tilt_supported_)
                     this->tilt = 0;
-                this->publish_state(true);
+                this->publish_state();
             }
 
             if (call.get_stop())
             {
                 this->issue_shade_command(directolor_stop);
+                this->publish_state();
             }
 
-            if (call.get_tilt())
+            if (call.get_tilt().has_value())
             {
-                float tilt = *call.get_tilt();
-                if (tilt == 0)
+                float tilt_val = *call.get_tilt();
+
+                if (tilt_val == 0.0f)
                 {
                     this->issue_shade_command(directolor_tiltClose);
                 }
-                else if (tilt == 1)
+                else if (tilt_val == 1.0f)
                 {
                     this->issue_shade_command(directolor_tiltOpen);
                 }
                 else
                 {
-                    if (this->tilt == tilt)
+                    if (this->tilt == tilt_val)
                     {
-                        ESP_LOGD("Directolor", "current tilt = requested tilt");
+                        ESP_LOGD(TAG, "Current tilt matches requested tilt.");
                         return;
                     }
-                    if (this->tilt > tilt)
+
+                    if (this->tilt > tilt_val)
                         this->issue_shade_command(directolor_tiltClose);
                     else
                         this->issue_shade_command(directolor_tiltOpen);
-                    ESP_LOGD(TAG, "current tilt %.2f requested tilt %.2f total seconds for tilt %d", this->tilt, tilt, MS_FOR_FULL_TILT_MOVEMENT);
-                    this->ms_duration_for_delayed_stop_ = MS_FOR_FULL_TILT_MOVEMENT * abs(this->tilt - tilt); // gives us the milliseconds of delay.
-                    ESP_LOGD(TAG, "desiredDelay: %d", this->ms_duration_for_delayed_stop_);
-                    this->start_of_timed_movement_ = millis();
+
+                    uint32_t delay = static_cast<uint32_t>(DEFAULT_TILT_DURATION_MS * std::abs(this->tilt - tilt_val));
+
+                    this->set_timeout("delayed_stop", delay, [this, tilt_val, delay]()
+                                      { 
+                                        this->issue_shade_command(directolor_stop); 
+                                        ESP_LOGD(TAG, "Tilt scheduled stop executed for %s", this->get_name().c_str()); });
+                    ESP_LOGD(TAG, "%s tilt scheduled for stop after delay. Current: %.2f, Target: %.2f, Delay: %u ms", this->get_name().c_str(), this->tilt, tilt_val, delay);
                 }
-                this->tilt = tilt;
-                this->position = 0;
+                this->tilt = tilt_val;
                 this->publish_state();
             }
         }
@@ -443,7 +451,6 @@ namespace esphome
                 ESP_LOGI(TAG, "searching for remote");
                 this->radio_->start_listening(); // put radio in RX mode
                 this->learningRemote = true;
-                memset(&this->remoteCode, 0, sizeof(remoteCode));
                 ESP_LOGI(TAG, "started listening - press a button on your remote");
                 if (esp_log_get_default_level() >= ESP_LOG_VERBOSE)
                 {
@@ -456,14 +463,14 @@ namespace esphome
 
         void DirectolorCover::enterRemoteCaptureMode()
         {
-            if (this->remoteCode.radioCode[0] || this->remoteCode.radioCode[1])
+            if (this->sniffed_remote_code_[0] || this->sniffed_remote_code_[1])
             {
                 this->radio_->stop_listening();
                 this->radio_->set_address_width(3);
 
                 uint8_t capture_addr[3];
-                capture_addr[2] = this->remoteCode.radioCode[0];
-                capture_addr[1] = this->remoteCode.radioCode[1];
+                capture_addr[2] = this->sniffed_remote_code_[0];
+                capture_addr[1] = this->sniffed_remote_code_[1];
                 capture_addr[0] = 0xC0;
                 this->radio_->open_reading_pipe(1, capture_addr);
 
@@ -556,13 +563,13 @@ namespace esphome
 
                             if (foundPattern > 3 && i > 4)
                             {
-                                this->remoteCode.radioCode[0] = payload[i - 5];
-                                this->remoteCode.radioCode[1] = payload[i - 4];
-                                this->remoteCode.radioCode[2] = payload[i + 4];
-                                this->remoteCode.radioCode[3] = payload[i + 5];
+                                this->sniffed_remote_code_[0] = payload[i - 5];
+                                this->sniffed_remote_code_[1] = payload[i - 4];
+                                this->sniffed_remote_code_[2] = payload[i + 4];
+                                this->sniffed_remote_code_[3] = payload[i + 5];
                                 this->learningRemote = false;
                                 ESP_LOGI(TAG, "Found Remote with address: [0x%02X, 0x%02X, 0x%02X, 0x%02X]",
-                                         this->remoteCode.radioCode[0], this->remoteCode.radioCode[1], this->remoteCode.radioCode[2], this->remoteCode.radioCode[3]);
+                                         this->sniffed_remote_code_[0], this->sniffed_remote_code_[1], this->sniffed_remote_code_[2], this->sniffed_remote_code_[3]);
                                 this->enterRemoteCaptureMode();
                             }
                         }
@@ -572,16 +579,18 @@ namespace esphome
                         bytes = payload[0] + 4;
                         if (bytes > 32)
                             return; // invalid payload - discarding
-#ifdef DIRECTOLOR_CAPTURE_FIRST
-                        bool skip = (millis() - last_millis < 25);
-                        last_millis = millis();
-                        if (skip)
-                            return;
-#endif
 
-                        const char *command = "ERROR";
+                        if (esp_log_get_default_level() <= ESP_LOG_DEBUG)
+                        {
+                            bool skip = (millis() - last_millis < 25);
+                            last_millis = millis();
+                            if (skip)
+                                return;
+                        }
 
-                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x86)
+                        const char* command = "ERROR";
+
+                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->sniffed_remote_code_[2] && payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x86)
                             switch (payload[bytes - 5])
                             {
                             case directolor_open:
@@ -606,7 +615,7 @@ namespace esphome
                                 command = "Store Favorite";
                             }
 
-                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->remoteCode.radioCode[2] && payload[7] == this->remoteCode.radioCode[3] && payload[8] == 0x08)
+                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->sniffed_remote_code_[2] && payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x08)
                         {
                             switch (payload[bytes - 4])
                             {
@@ -619,17 +628,15 @@ namespace esphome
                             }
                         }
 
-                        if (payload[0] == 0x12 && payload[1] == 0x80 && payload[2] == 0x0D && payload[4] == 0xFF && payload[5] == 0xFF && payload[16] == this->remoteCode.radioCode[2] && payload[17] == this->remoteCode.radioCode[3] && payload[18] == 0xC8)
+                        if (payload[0] == 0x12 && payload[1] == 0x80 && payload[2] == 0x0D && payload[4] == 0xFF && payload[5] == 0xFF && payload[16] == this->sniffed_remote_code_[2] && payload[17] == this->sniffed_remote_code_[3] && payload[18] == 0xC8)
                             command = "Duplicate";
 
                         if (command == "ERROR")
                             return;
 
-                        ESP_LOGV(TAG, "bytes: %d pipe: %d: %s",
-                                 bytes,
-                                 pipe,
-                                 format_hex_pretty(reinterpret_cast<const uint8_t *>(payload), bytes).c_str());
-                        ESP_LOGI(TAG, "Received %s from: %s", command, format_hex(this->remoteCode.radioCode, 4).c_str());
+                        ESP_LOGV(TAG, "bytes: %d pipe: %d: %s", bytes, pipe, format_hex_pretty(reinterpret_cast<const uint8_t *>(payload), bytes).c_str());
+                        char buffer[12];
+                        ESP_LOGI(TAG, "Received %s from: %s", command, format_hex_pretty_to(buffer, this->sniffed_remote_code_.data(), this->sniffed_remote_code_.size()));
                     }
                 }
             }

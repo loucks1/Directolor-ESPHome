@@ -2,6 +2,9 @@ esphome:
   name: development
   friendly_name: development
 
+substitutions:
+  enable_directolor_remote_search: true
+
 esp32:
   board: esp32dev
   framework:
@@ -10,6 +13,7 @@ esp32:
       minimum_chip_revision: "3.1"
       sram1_as_iram: true
 
+api:
 
 logger:
   level: DEBUG
@@ -47,25 +51,39 @@ external_components:
     components: [ nrf24, directolor_cover ]
 
 packages:
+
+  test_shade: !include
+    file: ./directolor_cover.yaml
+    vars:
+      id: test_shade
+      name: "Test Shade"
+      nrf24_id: my_nrf24   
+      radio_code: [0x06, 0x04, 0x05, 0x12]
+      tilt_supported: true
+      channel: 1
+      movement_duration: 10s
+      disable_favorite_support: true
+      disable_program_support: true
+
   entry_blinds: !include
     file: ./directolor_cover.yaml
     vars:
-      id: entry_blinds
-      name: "Entry Blinds"
-      nrf24_id: my_nrf_radio   
+      id: entry_blinds_DEV
+      name: "Entry Blinds DEV"
+      nrf24_id: my_nrf24   
       radio_code: [0x12, 0xF0, 0x78, 0x09]
       tilt_supported: true
       channel: 1
-      movement_duration: 0s
+      movement_duration: 10s
       disable_favorite_support: true
       disable_program_support: true
 
   upper_shades_left: !include
     file: ./directolor_cover.yaml
     vars:
-      id: upper_shades_left
-      name: "Upper Shades Left"
-      nrf24_id: my_nrf_radio   
+      id: upper_shades_left_DEV
+      name: "Upper Shades Left DEV"
+      nrf24_id: my_nrf24   
       radio_code: [0x11, 0x11, 0xB9, 0x7B]
       tilt_supported: true
       channel: 1

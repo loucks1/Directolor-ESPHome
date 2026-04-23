@@ -5,12 +5,8 @@
 #include "esphome/components/nrf24/nrf24.h" // Include the base component
 #include "esphome/components/nrf24/nRF24L01.h"
 
-#define DIRECTOLOR_REMOTE_CHANNELS 6
-
-#define DIRECTOLOR_CAPTURE_FIRST    // with this enabled, it will only show the first message when in capture mode, otherwise, it dumps every message it can - if you want to see full join or remove codes, you'll need to disable this.
-#define DIRECTOLOR_DEBUG_SENT_CODES // with this enabled, we'll log the codes we're sending
-
-#define MS_FOR_FULL_TILT_MOVEMENT 5000
+static constexpr uint8_t REMOTE_CHANNELS = 6;
+static constexpr uint32_t DEFAULT_TILT_DURATION_MS = 5000;
 
 enum BlindAction
 {
@@ -34,14 +30,11 @@ namespace esphome
     {
     public:
       void set_nrf24(nrf24::NRF24Component *parent) { this->radio_ = parent; }
-      void set_radio_code(std::vector<uint8_t> code)
+      void set_radio_code(const std::vector<uint8_t> &code)
       {
-        if (code.size() >= 4)
+        for (size_t i = 0; i < std::min(code.size(), radio_code_.size()); i++)
         {
-          this->radio_code_[0] = code[0];
-          this->radio_code_[1] = code[1];
-          this->radio_code_[2] = code[2];
-          this->radio_code_[3] = code[3];
+          radio_code_[i] = code[i];
         }
       }
       void set_movement_duration(float seconds) { this->movement_duration_ms_ = static_cast<uint32_t>(seconds * 1000.0f); }
@@ -64,7 +57,7 @@ namespace esphome
       int get_group_radio_command(uint8_t *payload, BlindAction blind_action);
       int get_duplicate_radio_command(uint8_t *payload, BlindAction blind_action);
       int get_set_fav_radio_command(uint8_t *payload, BlindAction blind_action);
-      uint8_t radio_code_[4];
+      std::array<uint8_t, 4> radio_code_{{0x06, 0x04, 0x05, 0x12}};
       uint8_t command_random_;
       uint32_t movement_duration_ms_ = 0;
       bool tilt_supported_ = false;
@@ -74,14 +67,7 @@ namespace esphome
       int8_t outstanding_send_attempts_ = 0;
       float current_position_;
 
-      unsigned long start_of_timed_movement_;
-      int ms_duration_for_delayed_stop_;
-
-    private:
-      struct RemoteCode
-      {
-        uint8_t radioCode[4];
-      };
+      private:
       bool radioStarted();
       bool enterRemoteSearchMode();
       void checkRadioPayload();
@@ -93,10 +79,10 @@ namespace esphome
 
       bool radioValid;
       bool radioInitialized;
-      RemoteCode remoteCode;
       bool learningRemote;
       unsigned long lastStartAttempt;
       unsigned long currentCooldown = 513;
+      std::array<uint8_t, 4> sniffed_remote_code_{{0x00, 0x00, 0x00, 0x00}};
 
       uint8_t code_attempts_;
       uint16_t message_send_repeats_;

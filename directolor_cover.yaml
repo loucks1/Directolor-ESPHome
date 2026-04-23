@@ -9,16 +9,16 @@ substitutions:
   disable_favorite_support: false
   disable_program_support: false
   radio_code: [0x06, 0x03, 0x05, 0x12]
-  directolor_code_attempts: 2
-  message_send_repeats: 256
+  directolor_code_attempts: 3
+  message_send_repeats: 513
 
 external_components:
-  - source:
-      type: git
-      url: https://github.com/loucks1/nrf24_espidf
-      path: components
-    components: [ nrf24 ]
-    refresh: 0s 
+#  - source:
+#      type: git
+#      url: https://github.com/loucks1/nrf24_espidf
+#      path: components
+#    components: [ nrf24 ]
+    #refresh: 0s 
 
   - source: 
       type: local
