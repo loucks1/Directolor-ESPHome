@@ -12,8 +12,7 @@ bool PayloadQueue::enqueue(const uint8_t* payload, int send_attempts) {
     return false; // Queue is full
   }
   PayloadEntry& entry = buffer_[tail_];
-  // Copy the entire 32 bytes, assuming the payload is always 32 bytes
-  memcpy(entry.payload, payload, 32);
+  memcpy(entry.payload, payload, esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE);
   entry.send_attempts = send_attempts;
   tail_ = (tail_ + 1) % QUEUE_SIZE;
   count_++;

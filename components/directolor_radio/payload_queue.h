@@ -2,6 +2,7 @@
 #define PAYLOAD_QUEUE_H
 
 #include <cstdint> // For uint8_t
+#include "directolor_radio_types.h"
 
 // Define the maximum queue size
 #define QUEUE_SIZE 100

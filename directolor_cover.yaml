@@ -9,8 +9,6 @@ substitutions:
   disable_favorite_support: false
   disable_program_support: false
   radio_code: [0x06, 0x03, 0x05, 0x12]
-  directolor_code_attempts: 3
-  message_send_repeats: 513
 
 external_components:
 #  - source:
@@ -27,15 +25,13 @@ external_components:
      
 cover:
   - platform: directolor_cover
-    nrf24_id: my_nrf24
     id: ${id}
     name: ${name}
+    directolor_radio_id: ${radio_hub_id}
     radio_code: ${radio_code}
     movement_duration: ${movement_duration}
     channel: ${channel}
     tilt_supported: ${tilt_supported}
-    directolor_code_attempts: ${directolor_code_attempts}
-    message_send_repeats: ${message_send_repeats}
 
 button:
   - platform: template
