@@ -38,6 +38,6 @@ async def to_code(config):
     cg.add(var.set_radio_hub(parent))
     
     cg.add(var.set_radio_code(config["radio_code"]))
-    cg.add(var.set_movement_duration(config["movement_duration"].total_milliseconds))
+    cg.add(var.set_movement_duration(config["movement_duration"].total_seconds))
     cg.add(var.set_tilt_supported(config["tilt_supported"]))
     cg.add(var.set_channel(config["channel"]))
