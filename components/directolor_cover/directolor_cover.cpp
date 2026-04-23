@@ -44,7 +44,7 @@ namespace esphome
 
                 uint16_t crc = calcCRC16((uint8_t *)payload, length, 0x755b, 0xFFFF, 0, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
                 
-                ESP_LOGD("custom", "payload: %s  crc: 0x%04X", esphome::format_hex_pretty(payload, length).c_str(), crc);
+                ESP_LOGI("custom", "payload: %s  crc: 0x%04X", esphome::format_hex_pretty(payload, length).c_str(), crc);
                 
                 payload[length++] = crc >> 8;
                 payload[length] = crc & 0xFF;
