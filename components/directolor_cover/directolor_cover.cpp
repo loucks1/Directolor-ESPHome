@@ -43,17 +43,8 @@ namespace esphome
                 int length = this->get_radio_command(payload, curr_action);
 
                 uint16_t crc = calcCRC16((uint8_t *)payload, length, 0x755b, 0xFFFF, 0, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
-
-                Serial.print("payload: ");
-                for (int i = 0; i < length; i++) {
-                  if (payload[i] < 0x10) Serial.print("0"); // Leading zero for single digits
-                  Serial.print(payload[i], HEX);
-                  if (i < length - 1) Serial.print(".");    // Dot separator
-                }
-
-                Serial.print("  crc: 0x");
-                if (crc < 0x1000) Serial.print("0");        // Pad CRC leading zeros
-                Serial.println(crc, HEX);
+                
+                ESP_LOGD("custom", "payload: %s  crc: 0x%04X", esphome::format_hex_pretty(payload, length).c_str(), crc);
                 
                 payload[length++] = crc >> 8;
                 payload[length] = crc & 0xFF;
