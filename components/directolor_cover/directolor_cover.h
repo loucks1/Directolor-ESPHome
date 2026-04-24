@@ -4,9 +4,6 @@
 #include "esphome/components/directolor_radio/directolor_radio_types.h"
 #include "esphome/components/directolor_radio/directolor_radio.h"
 
-static constexpr uint8_t REMOTE_CHANNELS = 6;
-static constexpr uint32_t DEFAULT_TILT_DURATION_MS = 5000;
-
 namespace esphome
 {
   namespace directolor_cover

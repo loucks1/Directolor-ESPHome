@@ -146,7 +146,7 @@ namespace esphome
                     else
                         this->issue_shade_command(directolor_tiltOpen);
 
-                    uint32_t delay = static_cast<uint32_t>(DEFAULT_TILT_DURATION_MS * std::abs(this->tilt - tilt_val));
+                    uint32_t delay = static_cast<uint32_t>(esphome::directolor_radio::DEFAULT_TILT_DURATION_MS * std::abs(this->tilt - tilt_val));
 
                     this->set_timeout("delayed_stop", delay, [this, tilt_val, delay]()
                                       { 
@@ -184,7 +184,7 @@ namespace esphome
         {
             ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), blind_action_to_string(blind_action));
             this->current_action_ = blind_action;
-            this->outstanding_send_attempts_ = this->hub_->get_code_attempts();  //TODO: Refactor this whole send logic
+            this->outstanding_send_attempts_ = this->hub_->get_code_attempts(); // TODO: Refactor this whole send logic
         }
 
         static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23

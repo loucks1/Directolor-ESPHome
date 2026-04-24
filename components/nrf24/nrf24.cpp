@@ -23,7 +23,6 @@ namespace esphome
 
     void NRF24Component::setup()
     {
-      ESP_LOGI("nrf24", "BUILD VERSION: 2026-04-20-V4");
       this->setup_pins_();
 
       ESP_LOGI(TAG, "Setting up SPI...");
@@ -34,7 +33,7 @@ namespace esphome
       ESP_LOGI(TAG, "Setting up NRF24...");
 
       // Now you can talk to the hardware
-      if (!this->begin())
+      if (!this->is_chip_connected())
       {
         ESP_LOGE(TAG, "NRF24 hardware not responding!");
         this->mark_failed();
@@ -42,6 +41,8 @@ namespace esphome
       }
 
       setChannel(this->channel_);
+      setRFDataRate(this->data_rate_);
+      setPALevel(this->pa_level_, true);
     }
 
     void NRF24Component::dump_config()
@@ -148,77 +149,14 @@ namespace esphome
     }
     // ====================== Core ======================
 
-    bool NRF24Component::begin()
-    {
-      this->setup_pins_();
-      this->ce(false); // Ensure we are in Standby-I
-
-      // 1. Power up with CRC DISABLED (matching Arduino start)
-      // 0x02 is PWR_UP. Bit 3 (EN_CRC) is 0.
-      this->write_register(nRF24L01::CONFIG, 0x02);
-      esp_rom_delay_us(5000);
-
-      this->flush_tx();
-      this->flush_rx();
-
-      // 2. Clear interrupts
-      this->write_register(nRF24L01::STATUS, 0x70);
-
-      // 3. Apply your specific YAML/Arduino settings
-      this->setPALevel(this->pa_level_);
-      this->set_rf_data_rate(this->data_rate_);
-
-      // CRITICAL: Set to DISABLED to match your Arduino success
-      this->disableCRC();
-      this->set_channel(this->channel_);
-      this->set_payload_size(this->payload_size_);
-
-      // 4. Disable Features that interfere with raw captures
-      this->write_register(nRF24L01::FEATURE, 0);
-      this->write_register(nRF24L01::DYNPD, 0);
-      this->write_register(nRF24L01::EN_AA, 0); // Force Auto-Ack OFF
-
-      esp_rom_delay_us(5000);
-      return this->is_chip_connected();
-    }
-
+    
     bool NRF24Component::is_chip_connected()
     {
       uint8_t aw = this->read_register(nRF24L01::SETUP_AW);
       return (aw >= 1 && aw <= 3);
     }
 
-    void NRF24Component::set_channel(uint8_t channel)
-    {
-      this->channel_ = channel;
-    }
 
-    void NRF24Component::set_data_rate_str(const std::string &data_rate)
-    {
-      if (data_rate == "250KBPS")
-        this->data_rate_ = RF24_250KBPS;
-      else if (data_rate == "2MBPS")
-        this->data_rate_ = RF24_2MBPS;
-      else
-        this->data_rate_ = RF24_1MBPS;
-    }
-
-    void NRF24Component::set_pa_level_str(const std::string &pa_level)
-    {
-      if (pa_level == "MIN")
-        this->pa_level_ = RF24_PA_MIN;
-      else if (pa_level == "LOW")
-        this->pa_level_ = RF24_PA_LOW;
-      else if (pa_level == "HIGH")
-        this->pa_level_ = RF24_PA_HIGH;
-      else
-        this->pa_level_ = RF24_PA_MAX;
-    }
-
-    void NRF24Component::set_payload_size(uint8_t size)
-    {
-      this->payload_size_ = std::min(size, (uint8_t)32);
-    }
 
     void NRF24Component::ce(bool level)
     {
@@ -478,7 +416,7 @@ namespace esphome
       return (rf24_pa_dbm_e)((this->read_register(nRF24L01::RF_SETUP) & 0x06) >> 1);
     }
 
-    bool NRF24Component::set_rf_data_rate(rf24_datarate_e speed)
+    bool NRF24Component::setRFDataRate(rf24_datarate_e speed)
     {
       // 0x28 is correct: it masks out Bit 5 (DR_LOW) and Bit 3 (DR_HIGH)
       uint8_t setup = this->read_register(nRF24L01::RF_SETUP) & ~(BIT(nRF24L01::RF_DR_LOW) | BIT(nRF24L01::RF_DR_HIGH));
@@ -558,11 +496,6 @@ namespace esphome
     uint8_t NRF24Component::getChannel()
     {
       return this->read_register(nRF24L01::RF_CH);
-    }
-
-    void NRF24Component::setPayloadSize(uint8_t size)
-    {
-      this->payload_size_ = std::min((uint8_t)size, (uint8_t)32);
     }
 
     uint8_t NRF24Component::getPayloadSize()

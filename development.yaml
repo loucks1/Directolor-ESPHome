@@ -37,12 +37,12 @@ spi:
 
 # ====================== nRF24 RADIO ======================
 nrf24:
-  - id: my_nrf24
-    spi_id: nrf24_spi
-    cs_pin: GPIO21
-    ce_pin: GPIO22
-    channel: 53
-    data_rate: 2MHz
+  id: my_nrf24
+  spi_id: nrf24_spi
+  cs_pin: GPIO21
+  ce_pin: GPIO22
+  channel: 53
+  data_rate: 2MHz
 
 directolor_radio:
   id: my_radio_hub
