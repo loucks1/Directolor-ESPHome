@@ -36,12 +36,19 @@ namespace esphome
 
       // ==================== Core setup ====================
       void setup() override;
+      void loop() override;
       void dump_config() override;
 
-      bool begin();
       bool begin(GPIOPin *ce_pin); // csn is handled by SPIDevice
 
       bool is_chip_connected();
+
+      using on_data_callback_t = std::function<void(const uint8_t *, uint8_t)>;
+
+      void add_on_data_callback(on_data_callback_t &&callback)
+      {
+        this->on_data_callbacks_.push_back(std::move(callback));
+      }
 
       // ==================== Operating mode ====================
       void start_listening();
@@ -134,6 +141,8 @@ namespace esphome
       void begin_transaction_();
       void end_transaction_();
 
+      std::vector<on_data_callback_t> on_data_callbacks_;
+
       uint8_t read_register(uint8_t reg);
       void read_register(uint8_t reg, uint8_t *buf, uint8_t len);
       void write_register(uint8_t reg, uint8_t value);
@@ -143,6 +152,11 @@ namespace esphome
 
       void start_write(const void *buf, uint8_t len, bool multicast);
       void write_payload(const void *buf, uint8_t data_len, uint8_t writeType);
+
+      uint32_t last_watchdog_check_{0};
+      bool hardware_initialized_{false};
+      bool soft_reset();
+      bool is_listening_{false};
 
     private:
       GPIOPin *ce_pin_{nullptr};
@@ -161,8 +175,6 @@ namespace esphome
       nRF24L01::rf24_pa_dbm_e pa_level_{nRF24L01::RF24_PA_MAX};
       nRF24L01::rf24_datarate_e data_rate_{nRF24L01::RF24_1MBPS};
       nRF24L01::rf24_crclength_e crc_length_{nRF24L01::RF24_CRC_16};
-
-      void setup_pins_();
     };
 
   } // namespace nrf24

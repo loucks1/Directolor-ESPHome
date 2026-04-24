@@ -15,13 +15,147 @@ namespace esphome
         void DirectolorRadio::setup()
         {
             this->current_sending_payload_.send_attempts = 0;
-            this->radioValid = false;
+
+            this->radio_->add_on_data_callback([this](const uint8_t *data, uint8_t len)
+                                             { this->process_incoming_packet(data, len); });
         }
 
         void DirectolorRadio::loop()
         {
-            this->checkRadioPayload();
+            if (this->enableSearchMode && this->CaptureState_ == REMOTE_STATE_NOT_STARTED)
+            {
+                this->enterRemoteSearchMode();
+                return;
+            }
+
             this->send_code();
+        }
+
+        void DirectolorRadio::process_incoming_packet(const uint8_t *payload, uint8_t bytes)
+        {
+            // 1. Sniffing / Learning Mode
+            if (this->CaptureState_ == REMOTE_STATE_LEARNING)
+            {
+                ESP_LOGV(TAG, "Checking payload for match: %s", format_hex_pretty(payload, bytes).c_str());
+
+                uint8_t foundPattern = 0;
+                for (int i = 0; i < bytes; i++)
+                {
+                    if (payload[i] != MATCHPATTERN[foundPattern])
+                    {
+                        foundPattern = 0;
+                    }
+                    else
+                    {
+                        foundPattern++;
+                    }
+
+                    // Logic check: if pattern found, extract the address
+                    if (foundPattern > 3 && i > 4)
+                    {
+                        this->sniffed_remote_code_[0] = payload[i - 5];
+                        this->sniffed_remote_code_[1] = payload[i - 4];
+                        this->sniffed_remote_code_[2] = payload[i + 4];
+                        this->sniffed_remote_code_[3] = payload[i + 5];
+
+                        this->CaptureState_ = REMOTE_STATE_CAPTURED;
+
+                        ESP_LOGI(TAG, "Found Remote with address: [0x%02X, 0x%02X, 0x%02X, 0x%02X]",
+                                 this->sniffed_remote_code_[0], this->sniffed_remote_code_[1],
+                                 this->sniffed_remote_code_[2], this->sniffed_remote_code_[3]);
+
+                        this->enterRemoteCaptureMode();
+                        return; // Exit early once captured
+                    }
+                }
+                return;
+            }
+
+            // 2. Normal Operation / Processing Commands
+            // Basic validation based on your protocol's first byte
+            uint8_t expected_bytes = payload[0] + 4;
+            if (expected_bytes > esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE || expected_bytes > bytes)
+            {
+                return; // Invalid or incomplete payload
+            }
+
+            // Debounce: ignore repeated packets within 500ms
+            uint32_t now = millis();
+            if (now - this->lastMillis_ < 500)
+            {
+                return;
+            }
+            this->lastMillis_ = now;
+
+            const char *command = "ERROR";
+
+            // Standard Command Check (0x86)
+            if (payload[4] == 0xFF && payload[5] == 0xFF &&
+                payload[6] == this->sniffed_remote_code_[2] &&
+                payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x86)
+            {
+
+                switch (payload[expected_bytes - 5])
+                {
+                case directolor_open:
+                    command = "Open";
+                    break;
+                case directolor_close:
+                    command = "Close";
+                    break;
+                case directolor_tiltOpen:
+                    command = "Tilt Open";
+                    break;
+                case directolor_tiltClose:
+                    command = "Tilt Close";
+                    break;
+                case directolor_stop:
+                    command = "Stop";
+                    break;
+                case directolor_toFav:
+                    command = "to Fav";
+                    break;
+                case directolor_setFav:
+                    command = "Store Favorite";
+                    break;
+                }
+            }
+
+            // Join/Remove Check (0x08)
+            if (payload[4] == 0xFF && payload[5] == 0xFF &&
+                payload[6] == this->sniffed_remote_code_[2] &&
+                payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x08)
+            {
+
+                switch (payload[expected_bytes - 4])
+                {
+                case directolor_join:
+                    command = "Join";
+                    break;
+                case directolor_remove:
+                    command = "Remove";
+                    break;
+                }
+            }
+
+            // Duplicate Check (0xC8)
+            if (payload[0] == 0x12 && payload[1] == 0x80 && payload[2] == 0x0D &&
+                payload[4] == 0xFF && payload[5] == 0xFF &&
+                payload[16] == this->sniffed_remote_code_[2] &&
+                payload[17] == this->sniffed_remote_code_[3] && payload[18] == 0xC8)
+            {
+                command = "Duplicate";
+            }
+
+            if (strcmp(command, "ERROR") == 0)
+            {
+                return;
+            }
+
+            // Log success
+            char addr_buffer[12];
+            ESP_LOGI(TAG, "Received %s from: %s", command,
+                     format_hex_pretty_to(addr_buffer, this->sniffed_remote_code_.data(), 4));
         }
 
         void DirectolorRadio::dump_config()
@@ -29,57 +163,19 @@ namespace esphome
             this->radio_->dump_config();
         }
 
-        bool DirectolorRadio::radioStarted()
-        {
-            //     if (this->radio_->failureDetected)
-            //     {
-            //         this->radioValid = false;
-            //         this->radio_->failureDetected = false;
-            //     }
-
-            if (!this->radioValid)
-            {
-                if (millis() - this->lastStartAttempt < currentCooldown)
-                    return false; // don't try to restart too often
-
-                if (currentCooldown < 60000)
-                    currentCooldown *= 2; // back off up to 1 minute
-
-                lastStartAttempt = millis();
-
-                ESP_LOGI(TAG, "attempting to start radio");
-
-                this->radioValid = this->radio_->begin();
-
-                if (this->radioValid)
-                {
-                    this->radio_->stop_listening();                          // make sure we're not still in listening mode from a previous session
-                    this->radio_->setAutoAck(false);                         // auto-ack has to be off or everything breaks because I haven't been able to RE the protocol CRC / validation
-                    this->radio_->setCRCLength(nRF24L01::RF24_CRC_DISABLED); // disable CRC
-
-                    ESP_LOGI(TAG, "radio started");
-                    this->enterRemoteSearchMode();
-                }
-                else
-                {
-                    ESP_LOGE(TAG, "Failure starting radio");
-                }
-            }
-
-            return this->radioValid;
-        }
-
         bool DirectolorRadio::enterRemoteSearchMode()
         {
-            if (this->radioStarted())
+            if (this->radio_->is_chip_connected())
             {
                 ESP_LOGI(TAG, "attempting to start listening");
                 this->radio_->stop_listening();
+                this->radio_->setAutoAck(false);
+                this->radio_->setCRCLength(nRF24L01::RF24_CRC_DISABLED);
                 this->radio_->set_address_width(5);
                 this->radio_->open_reading_pipe(1, 0x5555555555); // always uses pipe 0
                 ESP_LOGI(TAG, "searching for remote");
                 this->radio_->start_listening(); // put radio in RX mode
-                this->learningRemote = true;
+                this->CaptureState_ = REMOTE_STATE_LEARNING;
                 ESP_LOGI(TAG, "started listening - press a button on your remote");
                 if (esp_log_get_default_level() >= ESP_LOG_VERBOSE)
                 {
@@ -107,7 +203,7 @@ namespace esphome
                 ESP_LOGI(TAG, "Now listening for 3-byte payloads on address: [%02X, %02X, %02X]",
                          capture_addr[0], capture_addr[1], capture_addr[2]);
             }
-            else if (learningRemote)
+            else if (this->CaptureState_ == REMOTE_STATE_LEARNING)
             {
                 enterRemoteSearchMode();
             }
@@ -124,7 +220,7 @@ namespace esphome
 
         void DirectolorRadio::send_code()
         {
-            if (!this->radioStarted())
+            if (!this->radio_->is_chip_connected())
                 return;
             if (this->current_sending_payload_.send_attempts == 0)
             {
@@ -162,111 +258,6 @@ namespace esphome
                     ESP_LOGV(TAG, "send code complete");
                     if (!queue_.dequeue(this->current_sending_payload_))
                         this->enterRemoteCaptureMode(); // go back and power down
-                }
-            }
-        }
-
-        void DirectolorRadio::checkRadioPayload() // could modify this to allow capture if commands were sent using multiple channels
-        {
-            if (this->radioStarted())
-            {
-                uint8_t pipe;
-                if (this->radio_->available(&pipe))
-                {
-                    uint8_t bytes = this->radio_->getPayloadSize(); // get the size of the payload
-                    char payload[bytes];
-                    this->radio_->read(payload, bytes); // fetch payload from FIFO
-
-                    if (this->learningRemote)
-                    {
-                        ESP_LOGV(TAG, "checking payload for match: %s", format_hex_pretty(reinterpret_cast<const uint8_t *>(payload), bytes).c_str());
-
-                        uint8_t foundPattern = 0;
-
-                        for (int i = 0; i < bytes; i++)
-                        {
-                            if (payload[i] != MATCHPATTERN[foundPattern])
-                                foundPattern = 0;
-                            else
-                                foundPattern++;
-
-                            if (foundPattern > 3 && i > 4)
-                            {
-                                this->sniffed_remote_code_[0] = payload[i - 5];
-                                this->sniffed_remote_code_[1] = payload[i - 4];
-                                this->sniffed_remote_code_[2] = payload[i + 4];
-                                this->sniffed_remote_code_[3] = payload[i + 5];
-                                this->learningRemote = false;
-                                ESP_LOGI(TAG, "Found Remote with address: [0x%02X, 0x%02X, 0x%02X, 0x%02X]",
-                                         this->sniffed_remote_code_[0], this->sniffed_remote_code_[1], this->sniffed_remote_code_[2], this->sniffed_remote_code_[3]);
-                                this->enterRemoteCaptureMode();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        bytes = payload[0] + 4;
-                        if (bytes > esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE)
-                            return; // invalid payload - discarding
-
-                        if (esp_log_get_default_level() <= ESP_LOG_DEBUG)
-                        {
-                            bool skip = (millis() - this->lastMillis_ < 25);
-                            this->lastMillis_ = millis();
-                            if (skip)
-                                return;
-                        }
-
-                        const char *command = "ERROR";
-
-                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->sniffed_remote_code_[2] && payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x86)
-                            switch (payload[bytes - 5])
-                            {
-                            case directolor_open:
-                                command = "Open";
-                                break;
-                            case directolor_close:
-                                command = "Close";
-                                break;
-                            case directolor_tiltOpen:
-                                command = "Tilt Open";
-                                break;
-                            case directolor_tiltClose:
-                                command = "Tilt Close";
-                                break;
-                            case directolor_stop:
-                                command = "Stop";
-                                break;
-                            case directolor_toFav:
-                                command = "to Fav";
-                                break;
-                            case directolor_setFav:
-                                command = "Store Favorite";
-                            }
-
-                        if (payload[4] == 0xFF && payload[5] == 0xFF && payload[6] == this->sniffed_remote_code_[2] && payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x08)
-                        {
-                            switch (payload[bytes - 4])
-                            {
-                            case directolor_join:
-                                command = "Join";
-                                break;
-                            case directolor_remove:
-                                command = "Remove";
-                                break;
-                            }
-                        }
-
-                        if (payload[0] == 0x12 && payload[1] == 0x80 && payload[2] == 0x0D && payload[4] == 0xFF && payload[5] == 0xFF && payload[16] == this->sniffed_remote_code_[2] && payload[17] == this->sniffed_remote_code_[3] && payload[18] == 0xC8)
-                            command = "Duplicate";
-
-                        if (command == "ERROR")
-                            return;
-
-                        ESP_LOGV(TAG, "bytes: %d pipe: %d: %s", bytes, pipe, format_hex_pretty(reinterpret_cast<const uint8_t *>(payload), bytes).c_str());
-                        char buffer[12];
-                        ESP_LOGI(TAG, "Received %s from: %s", command, format_hex_pretty_to(buffer, this->sniffed_remote_code_.data(), this->sniffed_remote_code_.size()));
-                    }
                 }
             }
         }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "esphome/components/directolor_radio/payload_queue.h"    
+#include "esphome/components/directolor_radio/payload_queue.h"
 #include "esphome/components/directolor_radio/directolor_radio_types.h"
 #include "esphome/components/nrf24/nrf24.h"
 
@@ -8,6 +8,13 @@ namespace esphome
 {
     namespace directolor_radio
     {
+        enum RemoteLearnState
+        {
+            REMOTE_STATE_NOT_STARTED = 0,
+            REMOTE_STATE_LEARNING = 1,
+            REMOTE_STATE_CAPTURED = 2,
+        };
+
         class DirectolorRadio : public Component
         {
         public:
@@ -28,13 +35,12 @@ namespace esphome
 
             bool radioStarted();
             bool enterRemoteSearchMode();
-            void checkRadioPayload();
+            void process_incoming_packet(const uint8_t *data, uint8_t len);
             void enterRemoteCaptureMode();
             void send_code();
 
-            bool radioValid{false};
-            bool radioInitialized{false};
-            bool learningRemote{false};
+            RemoteLearnState CaptureState_{REMOTE_STATE_NOT_STARTED};
+            bool enableSearchMode{true};
 
             uint32_t lastStartAttempt{0};
             uint32_t currentCooldown{513};

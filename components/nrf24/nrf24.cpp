@@ -12,37 +12,94 @@ namespace esphome
 
     static const char *const TAG = "nrf24";
 
-    void NRF24Component::setup_pins_()
+    void NRF24Component::setup()
     {
       if (this->ce_pin_)
       {
         this->ce_pin_->setup();
         this->ce_pin_->digital_write(false);
       }
-    }
-
-    void NRF24Component::setup()
-    {
-      this->setup_pins_();
-
-      ESP_LOGI(TAG, "Setting up SPI...");
 
       this->spi_setup();
-      delay(100);
+      delay(10);
 
-      ESP_LOGI(TAG, "Setting up NRF24...");
+      if (!this->soft_reset())
+      {
+        ESP_LOGE(TAG, "NRF24 hardware not responding at boot. Will retry in loop.");
+      }
+    }
 
-      // Now you can talk to the hardware
+    bool NRF24Component::soft_reset()
+    {
+      this->powerDown();
+      delay(10);
+      this->powerUp();
+      delay(10); // Wait for crystal stabilization
+
+      // 2. Validate Connection
       if (!this->is_chip_connected())
       {
-        ESP_LOGE(TAG, "NRF24 hardware not responding!");
-        this->mark_failed();
-        return;
+        this->hardware_initialized_ = false;
+        return false;
       }
+
+      this->write_register(nRF24L01::STATUS, nRF24L01::RX_DR | nRF24L01::TX_DS | nRF24L01::MAX_RT);
+
+      this->flush_rx();
+      this->flush_tx();
 
       setChannel(this->channel_);
       setRFDataRate(this->data_rate_);
       setPALevel(this->pa_level_, true);
+      ESP_LOGI(TAG, "nRF24L01+ initialized successfully.");
+      this->hardware_initialized_ = true;
+      return true;
+    }
+
+    void NRF24Component::loop()
+    {
+      uint32_t now = millis();
+
+      // Run watchdog every 15 seconds
+      if (now - this->last_watchdog_check_ > 15000)
+      {
+        this->last_watchdog_check_ = now;
+
+        if (!this->hardware_initialized_)
+        {
+          ESP_LOGW(TAG, "nRF24L01+ connection lost! Attempting recovery...");
+          this->soft_reset();
+        }
+
+        this->hardware_initialized_ = this->is_chip_connected();
+      }
+
+      if (this->hardware_initialized_ && this->is_listening_ && !this->on_data_callbacks_.empty() && this->available())
+      {
+        uint8_t len = this->getPayloadSize();
+        if (dynamic_payloads_enabled_)
+        {
+          len = this->getDynamicPayloadSize();
+        }
+
+        if (len == 0 || len > 32)
+        {
+          this->flush_rx();
+          this->write_register(nRF24L01::STATUS, nRF24L01::RX_DR); // Clear interrupt
+          return;
+        }
+
+        uint8_t buffer[32];
+        this->read(buffer, len);
+
+        ESP_LOGV(TAG, "Received packet: %d  %s", len, format_hex_pretty(buffer, len).c_str());
+
+        // Pass the pointer and the length to subscribers
+        for (auto &callback : this->on_data_callbacks_)
+        {
+          callback(buffer, len);
+        }
+      }
     }
 
     void NRF24Component::dump_config()
@@ -56,8 +113,7 @@ namespace esphome
 
       yield();
 
-      // 2. RAW REGISTER DUMP (The "Truth" for sniffing)
-      ESP_LOGCONFIG(TAG, "  --- Sniffing State ---");
+      ESP_LOGCONFIG(TAG, "  --- register states ---");
       uint8_t config = this->read_register(nRF24L01::CONFIG);
       uint8_t en_aa = this->read_register(nRF24L01::EN_AA);
       uint8_t en_rx = this->read_register(nRF24L01::EN_RXADDR);
@@ -67,7 +123,8 @@ namespace esphome
       uint8_t rf_setup = this->read_register(nRF24L01::RF_SETUP);
       uint8_t status = this->read_register(nRF24L01::STATUS);
       uint8_t observe_tx = this->read_register(nRF24L01::OBSERVE_TX);
-      uint8_t rpd = this->read_register(nRF24L01::RPD); // Carrier Detect
+      uint8_t rpd = this->read_register(nRF24L01::RPD);
+      bool carrier = this->testCarrier();
       uint8_t dynpd = this->read_register(nRF24L01::DYNPD);
       uint8_t feature = this->read_register(nRF24L01::FEATURE);
 
@@ -79,7 +136,7 @@ namespace esphome
       ESP_LOGCONFIG(TAG, "    RF_CH:    0x%02X (Hex %02X = Dec %d)", rf_ch, rf_ch, rf_ch);
       ESP_LOGCONFIG(TAG, "    RF_SETUP: 0x%02X (Data Rate/Power)", rf_setup);
       ESP_LOGCONFIG(TAG, "    STATUS:   0x%02X", status);
-      ESP_LOGCONFIG(TAG, "    RPD:      0x%02X (Signal Strength)", rpd);
+      ESP_LOGCONFIG(TAG, "    RPD:      0x%02X (%s)", rpd, carrier ? "SIGNAL DETECTED" : "Quiet");
       ESP_LOGCONFIG(TAG, "    DYNPD:    0x%02X", dynpd);
       ESP_LOGCONFIG(TAG, "    FEATURE:  0x%02X", feature);
 
@@ -149,14 +206,11 @@ namespace esphome
     }
     // ====================== Core ======================
 
-    
     bool NRF24Component::is_chip_connected()
     {
       uint8_t aw = this->read_register(nRF24L01::SETUP_AW);
       return (aw >= 1 && aw <= 3);
     }
-
-
 
     void NRF24Component::ce(bool level)
     {
@@ -174,10 +228,12 @@ namespace esphome
       write_register(nRF24L01::CONFIG, config_reg_);
       write_register(nRF24L01::STATUS, RF24_IRQ_ALL);
       this->ce(true);
+      this->is_listening_ = true;
     }
 
     void NRF24Component::stop_listening()
     {
+      this->is_listening_ = false;
       this->ce(false);
       this->write_register(nRF24L01::CONFIG, this->read_register(nRF24L01::CONFIG) & ~BIT(nRF24L01::PRIM_RX));
       if (this->ack_payloads_enabled_)
@@ -199,48 +255,50 @@ namespace esphome
 
     bool NRF24Component::available()
     {
-      return !(this->read_register(nRF24L01::FIFO_STATUS) & nRF24L01::RX_EMPTY);
+      return this->available(nullptr);
     }
 
     bool NRF24Component::available(uint8_t *pipe_num)
     {
+      // 1. Get the status
       uint8_t status = this->read_register(nRF24L01::STATUS);
-      uint8_t pipe = (status >> nRF24L01::RX_P_NO) & 0x07;
 
-      if (pipe_num)
-        *pipe_num = pipe;
+      // 2. Check the pipe number bits (1, 2, and 3)
+      uint8_t pipe = (status >> 1) & 0x07;
 
-      // If Data Ready is set but pipe is 7, it's a ghost packet.
-      // Clear it so the radio can move on to the next real packet.
-      if ((status & nRF24L01::RX_DR) && pipe > 5)
+      if (pipe == 7)
       {
-        this->write_register(nRF24L01::STATUS, nRF24L01::RX_DR);
+        // If the Data Ready bit (6) is stuck on, clear it now
+        if (status & 0x40)
+        {
+          this->write_register(nRF24L01::STATUS, 0x40);
+        }
         return false;
       }
 
-      return (status & nRF24L01::RX_DR);
+      if (pipe_num)
+        *pipe_num = pipe;
+      return true;
     }
 
     void NRF24Component::read(void *buf, uint8_t len)
     {
-      begin_transaction_();
-      // 1. Send the raw R_RX_PAYLOAD command (0x61) directly
+      this->begin_transaction_();
       this->status_ = this->transfer_byte(nRF24L01::R_RX_PAYLOAD);
-
-      // 2. Read the actual payload bytes
       this->read_array((uint8_t *)buf, len);
-      end_transaction_();
+      this->end_transaction_();
 
-      // 3. Clear the interrupt flag
-      this->write_register(nRF24L01::STATUS, nRF24L01::RF24_RX_DR);
+      this->write_register(nRF24L01::STATUS, BIT(nRF24L01::RX_DR));
 
-      uint8_t current_status = this->read_register(nRF24L01::STATUS);
+      uint8_t fifo_status = this->read_register(nRF24L01::FIFO_STATUS);
+      bool more_data = !(fifo_status & BIT(nRF24L01::RX_EMPTY));
 
-      ESP_LOGV(TAG, "Read %d bytes: %s | Status: 0x%02X (DR bit is %s)",
-               len,
-               format_hex((const uint8_t *)buf, len).c_str(),
-               current_status,
-               (current_status & nRF24L01::RF24_RX_DR) ? "SET" : "CLEARED");
+      ESP_LOGV(TAG, "Read %d bytes: %s", len, format_hex((const uint8_t *)buf, len).c_str());
+
+      if (more_data)
+      {
+        ESP_LOGV(TAG, "FIFO not empty, more packets pending...");
+      }
     }
 
     bool NRF24Component::write(const void *buf, uint8_t len)
@@ -256,6 +314,7 @@ namespace esphome
       {
         if (millis() > timeout)
           return false;
+        yield();
       }
       this->ce(false);
       uint8_t status = this->read_register(nRF24L01::STATUS);
