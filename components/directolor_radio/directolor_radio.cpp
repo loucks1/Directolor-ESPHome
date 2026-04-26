@@ -17,7 +17,7 @@ namespace esphome
             this->current_sending_payload_.send_attempts = 0;
 
             this->radio_->add_on_data_callback([this](const uint8_t *data, uint8_t len)
-                                             { this->process_incoming_packet(data, len); });
+                                               { this->process_incoming_packet(data, len); });
         }
 
         void DirectolorRadio::loop()
@@ -160,7 +160,9 @@ namespace esphome
 
         void DirectolorRadio::dump_config()
         {
-            this->radio_->dump_config();
+            ESP_LOGCONFIG(TAG, "Directolor Radio:");
+            ESP_LOGCONFIG(TAG, "  Code Attempts: %d", this->code_attempts_);
+            ESP_LOGCONFIG(TAG, "  Message Send Repeats: %d", this->message_send_repeats_);
         }
 
         bool DirectolorRadio::enterRemoteSearchMode()

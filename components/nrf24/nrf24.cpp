@@ -104,47 +104,49 @@ namespace esphome
 
     void NRF24Component::dump_config()
     {
-      ESP_LOGCONFIG(TAG, "nRF24L01+ Radio Diagnostic Dump:");
-      LOG_PIN("   CE Pin:", this->ce_pin_);
-      LOG_SPI_DEVICE(this);
 
       // 1. Basic Pretty Print (if available)
       this->printPrettyDetails();
+      LOG_PIN("   CE Pin:", this->ce_pin_);
+      LOG_SPI_DEVICE(this);
+      if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE)
+      {
 
-      yield();
+        yield();
 
-      ESP_LOGCONFIG(TAG, "  --- register states ---");
-      uint8_t config = this->read_register(nRF24L01::CONFIG);
-      uint8_t en_aa = this->read_register(nRF24L01::EN_AA);
-      uint8_t en_rx = this->read_register(nRF24L01::EN_RXADDR);
-      uint8_t setup_aw = this->read_register(nRF24L01::SETUP_AW);
-      uint8_t setup_retr = this->read_register(nRF24L01::SETUP_RETR);
-      uint8_t rf_ch = this->read_register(nRF24L01::RF_CH);
-      uint8_t rf_setup = this->read_register(nRF24L01::RF_SETUP);
-      uint8_t status = this->read_register(nRF24L01::STATUS);
-      uint8_t observe_tx = this->read_register(nRF24L01::OBSERVE_TX);
-      uint8_t rpd = this->read_register(nRF24L01::RPD);
-      bool carrier = this->testCarrier();
-      uint8_t dynpd = this->read_register(nRF24L01::DYNPD);
-      uint8_t feature = this->read_register(nRF24L01::FEATURE);
+        ESP_LOGCONFIG(TAG, "  --- register states ---");
+        uint8_t config = this->read_register(nRF24L01::CONFIG);
+        uint8_t en_aa = this->read_register(nRF24L01::EN_AA);
+        uint8_t en_rx = this->read_register(nRF24L01::EN_RXADDR);
+        uint8_t setup_aw = this->read_register(nRF24L01::SETUP_AW);
+        uint8_t setup_retr = this->read_register(nRF24L01::SETUP_RETR);
+        uint8_t rf_ch = this->read_register(nRF24L01::RF_CH);
+        uint8_t rf_setup = this->read_register(nRF24L01::RF_SETUP);
+        uint8_t status = this->read_register(nRF24L01::STATUS);
+        uint8_t observe_tx = this->read_register(nRF24L01::OBSERVE_TX);
+        uint8_t rpd = this->read_register(nRF24L01::RPD);
+        bool carrier = this->testCarrier();
+        uint8_t dynpd = this->read_register(nRF24L01::DYNPD);
+        uint8_t feature = this->read_register(nRF24L01::FEATURE);
 
-      ESP_LOGCONFIG(TAG, "    CONFIG:   0x%02X (%s)", config, (config & 0x08) ? "CRC ENABLED!" : "CRC Disabled");
-      ESP_LOGCONFIG(TAG, "    EN_AA:    0x%02X (%s)", en_aa, (en_aa == 0x00) ? "Promiscuous OK" : "AUTO-ACK ON!");
-      ESP_LOGCONFIG(TAG, "    EN_RX:    0x%02X (Pipes Enabled)", en_rx);
-      ESP_LOGCONFIG(TAG, "    SETUP_AW: 0x%02X (Address Width)", setup_aw);
-      ESP_LOGCONFIG(TAG, "    SETUP_RE: 0x%02X (Retransmission)", setup_retr);
-      ESP_LOGCONFIG(TAG, "    RF_CH:    0x%02X (Hex %02X = Dec %d)", rf_ch, rf_ch, rf_ch);
-      ESP_LOGCONFIG(TAG, "    RF_SETUP: 0x%02X (Data Rate/Power)", rf_setup);
-      ESP_LOGCONFIG(TAG, "    STATUS:   0x%02X", status);
-      ESP_LOGCONFIG(TAG, "    RPD:      0x%02X (%s)", rpd, carrier ? "SIGNAL DETECTED" : "Quiet");
-      ESP_LOGCONFIG(TAG, "    DYNPD:    0x%02X", dynpd);
-      ESP_LOGCONFIG(TAG, "    FEATURE:  0x%02X", feature);
+        ESP_LOGCONFIG(TAG, "    CONFIG:   0x%02X (%s)", config, (config & 0x08) ? "CRC ENABLED!" : "CRC Disabled");
+        ESP_LOGCONFIG(TAG, "    EN_AA:    0x%02X (%s)", en_aa, (en_aa == 0x00) ? "Promiscuous OK" : "AUTO-ACK ON!");
+        ESP_LOGCONFIG(TAG, "    EN_RX:    0x%02X (Pipes Enabled)", en_rx);
+        ESP_LOGCONFIG(TAG, "    SETUP_AW: 0x%02X (Address Width)", setup_aw);
+        ESP_LOGCONFIG(TAG, "    SETUP_RE: 0x%02X (Retransmission)", setup_retr);
+        ESP_LOGCONFIG(TAG, "    RF_CH:    0x%02X (Hex %02X = Dec %d)", rf_ch, rf_ch, rf_ch);
+        ESP_LOGCONFIG(TAG, "    RF_SETUP: 0x%02X (Data Rate/Power)", rf_setup);
+        ESP_LOGCONFIG(TAG, "    STATUS:   0x%02X", status);
+        ESP_LOGCONFIG(TAG, "    RPD:      0x%02X (%s)", rpd, carrier ? "SIGNAL DETECTED" : "Quiet");
+        ESP_LOGCONFIG(TAG, "    DYNPD:    0x%02X", dynpd);
+        ESP_LOGCONFIG(TAG, "    FEATURE:  0x%02X", feature);
 
-      yield();
+        yield();
 
-      uint8_t addr[5] = {0};
-      this->read_register(nRF24L01::RX_ADDR_P1, addr, this->addr_width_);
-      ESP_LOGCONFIG(TAG, "    RX_ADDR_P1: %s", format_hex(addr, this->addr_width_).c_str());
+        uint8_t addr[5] = {0};
+        this->read_register(nRF24L01::RX_ADDR_P1, addr, this->addr_width_);
+        ESP_LOGCONFIG(TAG, "    RX_ADDR_P1: %s", format_hex(addr, this->addr_width_).c_str());
+      }
     }
     // ====================== SPI Helpers ======================
 
