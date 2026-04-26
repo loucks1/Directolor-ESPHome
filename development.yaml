@@ -50,18 +50,6 @@ directolor_radio:
   directolor_code_attempts: 3
   message_send_repeats: 513
 
-
-external_components:
-  - source:
-      type: git
-      url: https://github.com/loucks1/nrf24_espidf 
-
-  - source:
-      type: git
-      url: https://github.com/loucks1/Directolor-ESPHome
-      ref: feature/nrf24-espidf-integration
-
-
 packages:
 
   test_shade: !include
