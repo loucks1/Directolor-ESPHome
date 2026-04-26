@@ -19,29 +19,6 @@ external_components:
       type: git
       url: https://github.com/loucks1/Directolor-ESPHome
       ref: feature/nrf24-espidf-integration
-
-#plumbing
-
-spi:
-  - id: nrf24_spi
-    clk_pin: GPIO18
-    mosi_pin: GPIO23
-    miso_pin: GPIO19
-    interface: hardware
-
-nrf24:
-  id: my_nrf24
-  spi_id: nrf24_spi
-  cs_pin: GPIO21
-  ce_pin: GPIO22
-  channel: 53
-  data_rate: 2MHz
-
-directolor_radio:
-  id: my_directolor_radio
-  nrf24_id: my_nrf24
-
-#cover
      
 cover:
   - platform: directolor_cover
@@ -52,7 +29,6 @@ cover:
     movement_duration: ${movement_duration}
     channel: ${channel}
     tilt_supported: ${tilt_supported}
-    radio_hub_id: my_directolor_radio
 
 button:
   - platform: template
