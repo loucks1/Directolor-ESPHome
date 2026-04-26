@@ -1,0 +1,27 @@
+# plumbing.yaml
+substitutions:
+  # Default Pin Assignments
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+  cs_pin: GPIO21
+  ce_pin: GPIO22
+
+spi:
+  - id: nrf24_spi
+    clk_pin: ${clk_pin}
+    mosi_pin: ${mosi_pin}
+    miso_pin: ${miso_pin}
+    interface: hardware
+
+nrf24:
+  id: my_nrf24
+  spi_id: nrf24_spi
+  cs_pin: ${cs_pin}
+  ce_pin: ${ce_pin}
+  channel: 53
+  data_rate: 2MHz
+
+directolor_radio:
+  id: my_directolor_radio
+  nrf24_id: my_nrf24
