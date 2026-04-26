@@ -50,11 +50,17 @@ directolor_radio:
   directolor_code_attempts: 3
   message_send_repeats: 513
 
+
 external_components:
   - source:
-      type: local
-      path: ./components
-    components: [ nrf24, directolor_radio, directolor_cover ]
+      type: git
+      url: https://github.com/loucks1/nrf24_espidf 
+
+  - source:
+      type: git
+      url: https://github.com/loucks1/Directolor-ESPHome
+      ref: feature/nrf24-espidf-integration
+
 
 packages:
 
@@ -68,32 +74,6 @@ packages:
       tilt_supported: true
       channel: 1
       movement_duration: 10s
-      disable_favorite_support: true
-      disable_program_support: true
-
-  entry_blinds: !include
-    file: ./directolor_cover.yaml
-    vars:
-      id: entry_blinds_DEV
-      name: "Entry Blinds DEV"
-      radio_hub_id: my_radio_hub   
-      radio_code: [0x12, 0xF0, 0x78, 0x09]
-      tilt_supported: true
-      channel: 1
-      movement_duration: 10s
-      disable_favorite_support: true
-      disable_program_support: true
-
-  upper_shades_left: !include
-    file: ./directolor_cover.yaml
-    vars:
-      id: upper_shades_left_DEV
-      name: "Upper Shades Left DEV"
-      radio_hub_id: my_radio_hub   
-      radio_code: [0x11, 0x11, 0xB9, 0x7B]
-      tilt_supported: true
-      channel: 1
-      movement_duration: 16s
       disable_favorite_support: true
       disable_program_support: true
 

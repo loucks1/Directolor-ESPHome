@@ -11,17 +11,14 @@ substitutions:
   radio_code: [0x06, 0x03, 0x05, 0x12]
 
 external_components:
-#  - source:
-#      type: git
-#      url: https://github.com/loucks1/nrf24_espidf
-#      path: components
-#    components: [ nrf24 ]
-    #refresh: 0s 
+  - source:
+      type: git
+      url: https://github.com/loucks1/nrf24_espidf 
 
-  - source: 
-      type: local
-      path: ./components
-    components: [ directolor_cover ]
+  - source:
+      type: git
+      url: https://github.com/loucks1/Directolor-ESPHome
+      ref: feature/nrf24-espidf-integration
      
 cover:
   - platform: directolor_cover
