@@ -13,7 +13,8 @@ substitutions:
 external_components:
   - source:
       type: git
-      url: https://github.com/loucks1/nrf24_espidf 
+      url: https://github.com/loucks1/nrf24_espidf
+      ref: main
 
   - source:
       type: git
