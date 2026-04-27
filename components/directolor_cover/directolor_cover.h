@@ -29,7 +29,6 @@ namespace esphome
       cover::CoverTraits get_traits() override;
       void control(const cover::CoverCall &call) override;
       void setup() override;
-      void loop() override;
 
     protected:
       directolor_radio::DirectolorRadio *hub_;
@@ -43,12 +42,7 @@ namespace esphome
       bool tilt_supported_ = false;
       uint8_t channel_;
 
-      BlindAction current_action_;
-      int8_t outstanding_send_attempts_ = 0;
       float current_position_;
-
-    private:
-      void process_outstanding_send_attempts();
     };
   }; // namespace directolor_cover
 } // namespace esphome

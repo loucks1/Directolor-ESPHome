@@ -32,38 +32,6 @@ namespace esphome
 
         void DirectolorCover::process_outstanding_send_attempts()
         {
-            BlindAction curr_action = this->current_action_;
-
-            if ((curr_action == directolor_join || curr_action == directolor_remove) && (outstanding_send_attempts_ % 2 == 0))
-            {
-                curr_action = directolor_duplicate;
-            }
-
-            this->outstanding_send_attempts_--;
-            uint8_t payload[esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE];
-
-            int length = this->get_radio_command(payload, curr_action);
-
-            uint16_t crc = crc16be((uint8_t *)payload, length, 0xFFFF, 0x755b, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
-            ESP_LOGV(TAG, "payload: %s  crc: 0x%04X", format_hex_pretty(payload, length).c_str(), crc);
-            payload[length++] = crc >> 8;
-            payload[length] = crc & 0xFF;
-
-            for (int i = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE; i > 0; i--) // pad with leading 0x55 to train the shade receivers
-            {
-                if (i - (esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length) >= 0)
-                    payload[i - 1] = payload[i - (esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length)];
-                else
-                    payload[i - 1] = 0x55;
-            }
-
-            this->hub_->sendPayload(payload);
-        }
-
-        void DirectolorCover::loop()
-        {
-            if (this->outstanding_send_attempts_ > 0)
-                process_outstanding_send_attempts();
         }
 
         void DirectolorCover::setup()
@@ -183,8 +151,32 @@ namespace esphome
         void DirectolorCover::issue_shade_command(BlindAction blind_action)
         {
             ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), blind_action_to_string(blind_action));
-            this->current_action_ = blind_action;
-            this->outstanding_send_attempts_ = this->hub_->get_code_attempts(); // TODO: Refactor this whole send logic
+            for (int i = 0; i < this->hub_->get_code_attempts(); i++)
+            {
+                if ((blind_action == directolor_join || blind_action == directolor_remove) && (i % 2 == 0))
+                {
+                    blind_action = directolor_duplicate;
+                }
+
+                uint8_t payload[esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE];
+
+                int length = this->get_radio_command(payload, curr_action);
+
+                uint16_t crc = crc16be((uint8_t *)payload, length, 0xFFFF, 0x755b, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
+                ESP_LOGV(TAG, "payload: %s  crc: 0x%04X", format_hex_pretty(payload, length).c_str(), crc);
+                payload[length++] = crc >> 8;
+                payload[length] = crc & 0xFF;
+
+                for (int i = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE; i > 0; i--) // pad with leading 0x55 to train the shade receivers
+                {
+                    if (i - (esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length) >= 0)
+                        payload[i - 1] = payload[i - (esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length)];
+                    else
+                        payload[i - 1] = 0x55;
+                }
+
+                this->hub_->sendPayload(payload);
+            }
         }
 
         static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
