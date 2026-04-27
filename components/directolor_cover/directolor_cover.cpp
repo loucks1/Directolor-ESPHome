@@ -30,10 +30,6 @@ namespace esphome
             return traits;
         }
 
-        void DirectolorCover::process_outstanding_send_attempts()
-        {
-        }
-
         void DirectolorCover::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
@@ -160,7 +156,7 @@ namespace esphome
 
                 uint8_t payload[esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE];
 
-                int length = this->get_radio_command(payload, curr_action);
+                int length = this->get_radio_command(payload, blind_action);
 
                 uint16_t crc = crc16be((uint8_t *)payload, length, 0xFFFF, 0x755b, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
                 ESP_LOGV(TAG, "payload: %s  crc: 0x%04X", format_hex_pretty(payload, length).c_str(), crc);
