@@ -236,7 +236,6 @@ namespace esphome
                     this->radio_->stop_listening(); // put radio in TX mode
                     this->radio_->set_address_width(3);
                     this->radio_->open_writing_pipe(0x060406);
-                    //                    this->radio_->set_payload_size(MAX_PAYLOAD_SIZE);  //TOdo; remove
                 }
             }
             else
@@ -258,7 +257,18 @@ namespace esphome
                 if (this->current_sending_payload_.send_attempts == 0)
                 {
                     ESP_LOGV(TAG, "send code complete");
-                    if (!queue_.dequeue(this->current_sending_payload_))
+                    if (queue_.dequeue(this->current_sending_payload_))
+                    {
+                        this->powerDown();
+                        delay(100); // Allow capacitors to drain and internal state to settle
+
+                        this->powerUp();
+                        delay(50); // Give the crystal and internal regulators time to reach a steady state
+
+                        // Flush the buffers to ensure no "lost" codes from the previous burst remain
+                        this->flush_tx();
+                    }
+                    else
                         this->enterRemoteCaptureMode(); // go back and power down
                 }
             }
