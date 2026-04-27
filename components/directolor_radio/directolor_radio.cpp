@@ -259,14 +259,7 @@ namespace esphome
                     ESP_LOGV(TAG, "send code complete");
                     if (queue_.dequeue(this->current_sending_payload_))
                     {
-                        this->powerDown();
                         delay(100); // Allow capacitors to drain and internal state to settle
-
-                        this->powerUp();
-                        delay(50); // Give the crystal and internal regulators time to reach a steady state
-
-                        // Flush the buffers to ensure no "lost" codes from the previous burst remain
-                        this->flush_tx();
                     }
                     else
                         this->enterRemoteCaptureMode(); // go back and power down
