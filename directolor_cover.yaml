@@ -16,12 +16,14 @@ external_components:
       url: https://github.com/loucks1/nrf24_espidf
       ref: main
     components: [nrf24]
+    refresh: 1s
 
   - source:
       type: git
       url: https://github.com/loucks1/Directolor-ESPHome
       ref: feature/nrf24-espidf-integration
     components: [directolor_radio,directolor_cover]
+    refresh: 1s
      
 cover:
   - platform: directolor_cover
