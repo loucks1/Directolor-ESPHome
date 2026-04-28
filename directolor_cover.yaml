@@ -9,6 +9,7 @@ substitutions:
   disable_favorite_support: false
   disable_program_support: false
   radio_code: [0x06, 0x03, 0x05, 0x12]
+  radio_hub_id: my_directolor_radio
 
 external_components:
   - source:
