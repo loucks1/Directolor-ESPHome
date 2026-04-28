@@ -38,9 +38,18 @@ You can include multiple `- path: directolor_cover.yaml` sections — typically 
 | `disable_favorite_support`  | Set to `true` to disable "Go to Favorite" and "Set Favorite" buttons in Home Assistant and ESPHome webserver (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3 |
 | `disable_program_support`   | Set to `true` to disable "Duplicate", "Join", and "Remove" buttons in Home Assistant and ESPHome webserver (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3 |
 
-The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.  If you change them, make sure to specify them for each vars section<br>
-&emsp;<b>nrf24_ce_pin</b> - defaults to 22 if not provided<br>
-&emsp;<b>nrf24_cs_pin</b> - defaults to 21 if not provided<br>
+Below are substitutions that you can use to change pins and default behavior.  Use what I have provided unless you have a good reason and know what you're doing.  
+
+| Parameter                | Value     | Description |
+|-------------------------|-----------|-------------|
+| `clk_pin`               | GPIO18    | SPI Clock pin |
+| `mosi_pin`              | GPIO23    | SPI MOSI pin |
+| `miso_pin`              | GPIO19    | SPI MISO pin |
+| `cs_pin`                | GPIO21    | Chip Select (CS) pin for the nRF24 module |
+| `ce_pin`                | GPIO22    | Chip Enable (CE) pin for the nRF24 module |
+| `payload_send_attempts` | 3         | Number of transmission attempts per payload |
+| `payload_send_repeats`  | 513       | Number of times each payload is repeated (affects reliability vs speed) |
+
 
 ```yaml
 # example configuration:
