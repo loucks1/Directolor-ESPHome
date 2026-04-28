@@ -45,7 +45,6 @@ namespace esphome
             bool listening_{true};
 
             RemoteLearnState CaptureState_{REMOTE_STATE_NOT_STARTED};
-            bool enableSearchMode{true};
 
             uint32_t lastStartAttempt{0};
             uint32_t cooldown_{20};

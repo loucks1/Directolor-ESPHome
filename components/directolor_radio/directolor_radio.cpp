@@ -22,9 +22,16 @@ namespace esphome
 
         void DirectolorRadio::loop()
         {
-            if (this->enableSearchMode && this->CaptureState_ == REMOTE_STATE_NOT_STARTED)
+            if (this->listening_ && this->CaptureState_ == REMOTE_STATE_NOT_STARTED)
             {
                 this->enterRemoteSearchMode();
+                return;
+            }
+
+            if (!this->listening_ || this->CaptureState_ != REMOTE_STATE_NOT_STARTED)
+            {
+                this->radio_->powerDown();
+                this->CaptureState_ = REMOTE_STATE_NOT_STARTED;
                 return;
             }
 
