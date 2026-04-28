@@ -39,8 +39,8 @@ switch:
     
     turn_on_action:
       - lambda: |-
-          id(my_directolor_radio).set_listening(true);  # Call your component method
-    
+          id(my_directolor_radio).set_listening(true);  
+          
     turn_off_action:
       - lambda: |-
           id(my_directolor_radio).set_listening(false);
