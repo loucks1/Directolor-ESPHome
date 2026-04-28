@@ -30,7 +30,7 @@ namespace esphome
             void sendPayload(uint8_t *payload);
             uint8_t get_code_attempts() const { return this->code_attempts_; }
 
-            void set_listening(bool listening) { this->listening_ = listening; };
+            void set_listening(bool listening) { this->listening_ = listening; }
             bool is_listening() const { return listening_; }
 
         protected:
