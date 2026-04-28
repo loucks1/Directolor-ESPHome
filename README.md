@@ -25,16 +25,18 @@ radio_code: [0x11, 0x11, 0x38, 0x28]
 
 You've now cloned your remote into directolor.  Test that you can control your shades via the web interface buttons. 
 
-You can include multiple "- path: directolor_cover.yaml" sections, you will typically have one for each shade.<br>
-For the vars: <br>
-&emsp;<b>id</b> is any valid ESPHome id<br>
-&emsp;<b>name</b> is the name you'd like it to have<br>
-&emsp;<b>radio_code</b> - see above or just put random values (hex) in here and join your blinds to it<br>
-&emsp;<b>channel</b> - the number of the blind on your remote<br>
-&emsp;<b>movement_duration</b> - a time value that tells how long it takes to fully open / close the blind.  If you leave this out, you will NOT get positional control of your blind, just open / close<br>
-&emsp;<b>tilt_supported</b> - whether or not the blind has tilt functions<br>
-&emsp;<b>disable_favorite_support</b> - setting this to true will mark the "to favorite" and "set favorite" buttons as disabled in Home Assistant (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3<br>
-&emsp;<b>disable_program_support</b> - setting this to true will mark the "duplicate", "join" and "remove" buttons as disabled in Home Assistant (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3<br>
+You can include multiple `- path: directolor_cover.yaml` sections — typically one for each shade.
+
+| Parameter                    | Description |
+|-----------------------------|-------------|
+| `id`                        | Any valid ESPHome ID (used internally to reference this cover) |
+| `name`                      | Friendly name for the shade in Home Assistant |
+| `radio_code`                | 6-byte radio code in hex (e.g. `0x1234567890AB`). Use random values and join your blind to it. |
+| `channel`                   | Channel number of the blind on your original remote (usually 1–15) |
+| `movement_duration`         | Time it takes for the blind to fully open or close (e.g. `18s`). Omit this if you only want basic open/close (no position control). |
+| `tilt_supported`            | `true` if the blind supports tilt functions |
+| `disable_favorite_support`  | Set to `true` to disable "Go to Favorite" and "Set Favorite" buttons in Home Assistant and ESPHome webserver |
+| `disable_program_support`   | Set to `true` to disable "Duplicate", "Join", and "Remove" buttons in Home Assistant and ESPHome webserver |
 
 The ce_pin and cs_pin will match your physical hardware connections.  Use what I have provided unless you know what you're doing for pins.  If you change them, make sure to specify them for each vars section<br>
 &emsp;<b>nrf24_ce_pin</b> - defaults to 22 if not provided<br>
