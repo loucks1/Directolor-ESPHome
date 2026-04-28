@@ -43,7 +43,7 @@ namespace esphome
             bool enableSearchMode{true};
 
             uint32_t lastStartAttempt{0};
-            uint32_t currentCooldown{513};
+            uint32_t cooldown_{20};
             unsigned long lastMillis_ = 0;
 
             uint8_t code_attempts_;

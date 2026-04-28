@@ -259,7 +259,7 @@ namespace esphome
                     ESP_LOGV(TAG, "send code complete");
                     if (queue_.dequeue(this->current_sending_payload_))
                     {
-                        delay(50); // Allow capacitors to drain and internal state to settle
+                        delay(this->cooldown_); // Allow capacitors to drain and internal state to settle
                     }
                     else
                         this->enterRemoteCaptureMode(); // go back and power down
