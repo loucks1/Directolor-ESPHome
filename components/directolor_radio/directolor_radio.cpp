@@ -30,6 +30,7 @@ namespace esphome
 
             if (!this->listening_ || this->CaptureState_ != REMOTE_STATE_NOT_STARTED)
             {
+                this->radio_->stop_listening();
                 this->radio_->powerDown();
                 this->CaptureState_ = REMOTE_STATE_NOT_STARTED;
                 return;
