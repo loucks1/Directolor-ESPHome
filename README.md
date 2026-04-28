@@ -10,21 +10,17 @@ Typical usage:
   Press the stop button on your existing remote a few times
 
   View the ESPHome device logs and look for something like: 
-```15:51:57	[I]	[directolor_radio:063]	
-Found Remote with address: [0x11, 0x11, 0x38, 0x28]
-15:51:57	[I]	[directolor_radio:205]	
-Now listening for 3-byte payloads on address: [C0, 11, 11]
-15:51:57	[I]	[directolor_radio:157]	
-Received Stop from: 11:11:38:28
-15:52:00	[I]	[directolor_radio:157]	
-Received Close from: 11:11:38:28
-15:52:01	[I]	[directolor_radio:157]	
-Received Open from: 11:11:38:28
-15:52:02	[I]	[directolor_radio:157]	
-Received Tilt Close from: 11:11:38:28
+```
+15:51:57	[I]	[directolor_radio:063]	Found Remote with address: [0x11, 0x11, 0x38, 0x28]
+15:51:57	[I]	[directolor_radio:205]	Now listening for 3-byte payloads on address: [C0, 11, 11]
+15:51:57	[I]	[directolor_radio:157]	Received Stop from: 11:11:38:28
+15:52:00	[I]	[directolor_radio:157]	Received Close from: 11:11:38:28
+15:52:01	[I]	[directolor_radio:157]	Received Open from: 11:11:38:28
+15:52:02	[I]	[directolor_radio:157]	Received Tilt Close from: 11:11:38:28
 ```
 Copy the bytes from your remote into the radio_code below, keeping the same position.  For the example above, you'd use:
-```radio_code: [0x11, 0x11, 0x38, 0x28]
+```
+radio_code: [0x11, 0x11, 0x38, 0x28]
 ```
 
 You've now cloned your remote into directolor.  Test that you can control your shades via the web interface buttons. 
