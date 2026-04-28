@@ -30,6 +30,9 @@ namespace esphome
             void sendPayload(uint8_t *payload);
             uint8_t get_code_attempts() const { return this->code_attempts_; }
 
+            void set_listening(bool listening) { this->listening_ = listening; };
+            bool is_listening() const { return listening_; }
+
         protected:
             nrf24::NRF24Component *radio_;
 
@@ -38,6 +41,8 @@ namespace esphome
             void process_incoming_packet(const uint8_t *data, uint8_t len);
             void enterRemoteCaptureMode();
             void send_code();
+
+            bool listening_{true};
 
             RemoteLearnState CaptureState_{REMOTE_STATE_NOT_STARTED};
             bool enableSearchMode{true};

@@ -29,3 +29,21 @@ directolor_radio:
   nrf24_id: my_nrf24
   directolor_code_attempts: ${payload_send_attempts}
   message_send_repeats: ${payload_send_repeats}
+
+switch:
+  - platform: template
+    name: "Directolor Radio Listening"
+    id: directolor_listening_switch
+    optimistic: true                  # Updates state immediately (good for most cases)
+    restore_mode: RESTORE_DEFAULT_ON # Or RESTORE_DEFAULT_ON / ALWAYS_OFF etc.
+    
+    turn_on_action:
+      - lambda: |-
+          id(directolor_radio).set_listening(true);  # Call your component method
+    
+    turn_off_action:
+      - lambda: |-
+          id(directolor_radio).set_listening(false);
+    
+    lambda: |-
+      return id(directolor_radio).is_listening();
