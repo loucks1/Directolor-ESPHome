@@ -46,4 +46,4 @@ switch:
           id(my_directolor_radio).set_listening(false);
     
     lambda: |-
-      return id(directolor_radio).is_listening();
+      return id(my_directolor_radio).is_listening();
