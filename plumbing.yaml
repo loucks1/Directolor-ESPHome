@@ -34,8 +34,8 @@ switch:
   - platform: template
     name: "Directolor Radio Listening"
     id: directolor_listening_switch
-    optimistic: true                  # Updates state immediately (good for most cases)
-    restore_mode: RESTORE_DEFAULT_ON # Or RESTORE_DEFAULT_ON / ALWAYS_OFF etc.
+    optimistic: true                  
+    restore_mode: RESTORE_DEFAULT_ON
     
     turn_on_action:
       - lambda: |-
