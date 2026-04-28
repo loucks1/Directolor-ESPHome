@@ -6,6 +6,8 @@ substitutions:
   miso_pin: GPIO19
   cs_pin: GPIO21
   ce_pin: GPIO22
+  payload_send_attempts: 3
+  payload_send_repeats: 513
 
 spi:
   - id: nrf24_spi
@@ -25,3 +27,5 @@ nrf24:
 directolor_radio:
   id: my_directolor_radio
   nrf24_id: my_nrf24
+  directolor_code_attempts: ${payload_send_attempts}
+  message_send_repeats: ${payload_send_repeats}

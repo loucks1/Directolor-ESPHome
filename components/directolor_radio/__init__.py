@@ -13,7 +13,7 @@ CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(DirectolorRadio),
         cv.Required(CONF_NRF24_ID): cv.use_id(nrf24.NRF24Component),
-        cv.Optional("directolor_code_attempts", default=2): cv.int_range(min=1, max=10),
+        cv.Optional("directolor_code_attempts", default=3): cv.int_range(min=1, max=10),
         cv.Optional("message_send_repeats", default=513): cv.int_range(min=1, max=1000),
     }
 ).extend(cv.COMPONENT_SCHEMA)
