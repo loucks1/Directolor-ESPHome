@@ -10,17 +10,21 @@ Typical usage:
   Press the stop button on your existing remote a few times
 
   View the ESPHome device logs and look for something like: 
-```14:26:47 [D] [nrf24l01_base:178] bytes: 20 pipe: 1: 11 00 05 CA FF FF B0 51 86 06 0F 01 00 B0 51 52 53 00 68 24 AA
-14:26:47 [I] [nrf24l01_base:228] Received Stop from: 0B 65 B0 51
-14:26:49 [D] [nrf24l01_base:178] bytes: 20 pipe: 1: 11 00 05 CB FF FF B0 51 86 06 10 01 00 B0 51 52 53 00 F7 BD AA
-14:26:49 [I] [nrf24l01_base:228] Received Stop from: 0B 65 B0 51
+```15:51:57	[I]	[directolor_radio:063]	
+Found Remote with address: [0x11, 0x11, 0x38, 0x28]
+15:51:57	[I]	[directolor_radio:205]	
+Now listening for 3-byte payloads on address: [C0, 11, 11]
+15:51:57	[I]	[directolor_radio:157]	
+Received Stop from: 11:11:38:28
+15:52:00	[I]	[directolor_radio:157]	
+Received Close from: 11:11:38:28
+15:52:01	[I]	[directolor_radio:157]	
+Received Open from: 11:11:38:28
+15:52:02	[I]	[directolor_radio:157]	
+Received Tilt Close from: 11:11:38:28
 ```
 Copy the bytes from your remote into the radio_code below, keeping the same position.  For the example above, you'd use:
-```radio_code:   #0B 65 B0 51
-  - 0x0B
-  - 0x65
-  - 0xB0
-  - 0x51
+```radio_code: [0x11, 0x11, 0x38, 0x28]
 ```
 
 You've now cloned your remote into directolor.  Test that you can control your shades via the web interface buttons. 
@@ -43,37 +47,33 @@ The ce_pin and cs_pin will match your physical hardware connections.  Use what I
 ```yaml
 # example configuration:
 
-packages:
   directolor:
     url:  https://github.com/loucks1/Directolor-ESPHome
+    ref: feature/nrf24-espidf-integration
+    refresh: 1s
     files:
+      - path: plumbing.yaml
       - path: directolor_cover.yaml
         vars:
-          id: blind1
-          name: Directolor Blind 1
-          radio_code: 
-            - 0x06
-            - 0x03
-            - 0x05
-            - 0x12
+          id: test_blind
+          name: Test Blind
+          radio_code:   [0x11, 0x11, 0x38, 0x28]
           tilt_supported: true
           channel: 1
           disable_favorite_support: true
           disable_program_support: true
+          radio_hub_id: my_directolor_radio 
       - path: directolor_cover.yaml
         vars:
-          id: blind2
-          name: Directolor Blind 2
-          radio_code: 
-            - 0x06
-            - 0x03
-            - 0x05
-            - 0x12
+          id: example_blind
+          name: Example Blind
+          radio_code:   [0x11, 0x11, 0x38, 0x28]
           tilt_supported: false
           channel: 2
           movement_duration: 17s
-          disable_favorite_support: false
-          disable_program_support: false
+          disable_favorite_support: true
+          disable_program_support: true
+          radio_hub_id: my_directolor_radio 
 ```
 
 
