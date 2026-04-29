@@ -33,6 +33,7 @@ namespace esphome
                 this->radio_->stop_listening();
                 this->radio_->powerDown();
                 this->CaptureState_ = REMOTE_STATE_NOT_STARTED;
+                ESP_LOGI(TAG, "stopped listening - will not capture remote codes until re-enabled");
                 return;
             }
 
