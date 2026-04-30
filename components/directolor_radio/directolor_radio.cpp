@@ -199,6 +199,13 @@ namespace esphome
 
         void DirectolorRadio::enterRemoteCaptureMode()
         {
+            if (!this->listening_)
+            {
+                this->CaptureState_ = REMOTE_STATE_NOT_STARTED;
+                this->radio_->stop_listening();
+                this->radio_->powerDown();
+                return;
+            }
             if (this->sniffed_remote_code_[0] || this->sniffed_remote_code_[1])
             {
                 this->radio_->stop_listening();
