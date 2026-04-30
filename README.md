@@ -49,6 +49,11 @@ Below are substitutions that you can use to change pins and default behavior.  U
 | `ce_pin`                | GPIO22    | Chip Enable (CE) pin for the nRF24 module |
 | `payload_send_attempts` | 3         | Number of transmission attempts per payload |
 | `payload_send_repeats`  | 513       | Number of times each payload is repeated (affects reliability vs speed) |
+| `intermessage_cooldown` | 30        | ms between each attempt |
+| `pa_level`              | HIGH      | NRF24L01+ transmit level (MIN, LOW, HIGH, MAX)
+| `rf_datarate`           | 1MBPS     | NRF24L01+ data rate (250KBPS, 1MBPS, 2MBPS) |
+
+Each time you send a code, Directolor will generate {payload_send_attempts} payloads to send on the radio.  Each of these is a separate command (open, close, etc) with a separate CRC.  It will then send {payload_send_repeats} copies of each generated payload with {intermessage_cooldown} ms delay between. 
 
 
 ```yaml
