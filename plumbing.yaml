@@ -23,7 +23,7 @@ nrf24:
   ce_pin: ${ce_pin}
   channel: 53
   data_rate: 2MHz
-  CONF_PA_LEVEL: MIN
+  pa_level: MIN
 
 directolor_radio:
   id: my_directolor_radio
