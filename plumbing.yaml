@@ -8,6 +8,7 @@ substitutions:
   ce_pin: GPIO22
   payload_send_attempts: 3
   payload_send_repeats: 513
+  pa_level: MAX
 
 spi:
   - id: nrf24_spi
@@ -23,7 +24,7 @@ nrf24:
   ce_pin: ${ce_pin}
   channel: 53
   data_rate: 2MHz
-  pa_level: MIN
+  pa_level: ${pa_level}
 
 directolor_radio:
   id: my_directolor_radio
