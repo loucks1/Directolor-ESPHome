@@ -190,6 +190,7 @@ namespace esphome
         {
             ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), blind_action_to_string(blind_action));
             this->current_blind_action_ = blind_action;
+            this->outstanding_retry_count_ = this->hub_->get_code_attempts();
         }
 
         static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
