@@ -50,6 +50,7 @@ namespace esphome
             uint32_t lastStartAttempt{0};
             uint8_t cooldown_{30};
             unsigned long lastMillis_ = 0;
+            unsigned long lastSendAttemptMillis_ = 0;
 
             uint8_t code_attempts_;
             uint16_t message_send_repeats_;

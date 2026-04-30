@@ -231,6 +231,12 @@ namespace esphome
 
         void DirectolorRadio::send_code()
         {
+            uint32_t now = millis();
+            if (this->current_sending_payload_.send_attempts == this->message_send_repeats_ && now - last_process_ < this->cooldown_)
+                return;
+
+            last_process_ = now;
+
             if (!this->radio_->is_chip_connected())
                 return;
             if (this->current_sending_payload_.send_attempts == 0)
@@ -266,11 +272,7 @@ namespace esphome
                 if (this->current_sending_payload_.send_attempts == 0)
                 {
                     ESP_LOGV(TAG, "send code complete");
-                    if (queue_.dequeue(this->current_sending_payload_))
-                    {
-                        delay(this->cooldown_); // Allow capacitors to drain and internal state to settle
-                    }
-                    else
+                    if (!queue_.dequeue(this->current_sending_payload_))
                         this->enterRemoteCaptureMode(); // go back and power down
                 }
             }

@@ -38,15 +38,16 @@ namespace esphome
 
         void DirectolorCover::loop()
         {
-            if (this->outstanding_retry_count_ > 0)
+            while (this->outstanding_retry_count_ > 0)
             {
                 create_and_send_payload(this->current_blind_action_);
                 this->outstanding_retry_count_--;
 
                 if (this->current_blind_action_ == directolor_join || this->current_blind_action_ == directolor_remove)
-                {
                     create_and_send_payload(directolor_duplicate);
-                }
+
+                if (this->outstanding_retry_count_ == this->hub_->get_code_attempts())
+                    return;
             }
         }
 
