@@ -21,6 +21,7 @@ namespace esphome
             void set_nrf24(nrf24::NRF24Component *parent) { this->radio_ = parent; }
             void set_directolor_code_attempts(uint8_t attempts) { this->code_attempts_ = attempts; }
             void set_message_send_repeats(uint16_t repeats) { this->message_send_repeats_ = repeats; }
+            void set_cooldown(uint8_t cooldown) { this->cooldown_ = cooldown; }
 
             void setup() override;
             void loop() override;
@@ -47,7 +48,7 @@ namespace esphome
             RemoteLearnState CaptureState_{REMOTE_STATE_NOT_STARTED};
 
             uint32_t lastStartAttempt{0};
-            uint32_t cooldown_{20};
+            uint8_t cooldown_{30};
             unsigned long lastMillis_ = 0;
 
             uint8_t code_attempts_;

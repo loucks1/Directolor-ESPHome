@@ -15,6 +15,7 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Required(CONF_NRF24_ID): cv.use_id(nrf24.NRF24Component),
         cv.Optional("directolor_code_attempts", default=3): cv.int_range(min=1, max=10),
         cv.Optional("message_send_repeats", default=513): cv.int_range(min=1, max=1000),
+        cv.Optional("intermessage_cooldown", default=30): cv.int_range(min=0, max=255),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -27,3 +28,4 @@ async def to_code(config):
     cg.add(var.set_nrf24(nrf24_var))
     cg.add(var.set_directolor_code_attempts(config["directolor_code_attempts"]))
     cg.add(var.set_message_send_repeats(config["message_send_repeats"]))
+    cg.add(var.set_cooldown(config["intermessage_cooldown"]))

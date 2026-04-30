@@ -235,7 +235,7 @@ namespace esphome
                 return;
             if (this->current_sending_payload_.send_attempts == 0)
             {
-                if (queue_.dequeue(this->current_sending_payload_))
+                if (this->queue_.dequeue(this->current_sending_payload_))
                 {
                     ESP_LOGV(TAG, "Processing - send_attempts: %d: %s",
                              this->current_sending_payload_.send_attempts,
