@@ -49,10 +49,8 @@ namespace esphome
                     return;
                 }
 
-                if (this->outstanding_retry_count_ == this->hub_->get_code_attempts())
+                if (this->outstanding_retry_count_-- == this->hub_->get_code_attempts())
                     return;
-
-                this->outstanding_retry_count_--;
             }
         }
 
