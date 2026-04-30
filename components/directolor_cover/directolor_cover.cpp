@@ -165,7 +165,7 @@ namespace esphome
 
         void DirectolorCover::issue_shade_command(BlindAction blind_action)
         {
-            ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), this->radio_->blind_action_to_string(blind_action));
+            ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), this->hub_->blind_action_to_string(blind_action));
             this->current_blind_action_ = blind_action;
             this->outstanding_retry_count_ = this->hub_->get_code_attempts();
         }
