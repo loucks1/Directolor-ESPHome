@@ -7,7 +7,9 @@ This differs from Wevolor (https://wevolor.com/) in that you DON'T need a Levolo
 Typical usage:
   Install the solution to your ESP32 by including the example below and modifying to fit your needs.  Don't worry about the radio_code just yet.
 
-  Press the stop button on your existing remote a few times
+  Once it is compiled, click on "VISIT" in ESPHome to get to the web interface.  Make sure that "Directolor Radio Listening" switch is turned on.  
+
+  Press the blind control buttons on your existing remote a few times
 
   View the ESPHome device logs and look for something like: 
 ```
@@ -18,7 +20,7 @@ Typical usage:
 15:52:01	[I]	[directolor_radio:157]	Received Open from: 11:11:38:28
 15:52:02	[I]	[directolor_radio:157]	Received Tilt Close from: 11:11:38:28
 ```
-Copy the bytes from your remote into the radio_code below, keeping the same position.  For the example above, you'd use:
+Copy the bytes from your remote into the radio_code below, keeping the same format.  For the example above, you'd use:
 ```
 radio_code: [0x11, 0x11, 0x38, 0x28]
 ```
@@ -40,7 +42,7 @@ You can include multiple `- path: directolor_cover.yaml` sections — typically 
 
 Below are substitutions that you can use to change pins and default behavior.  Use what I have provided unless you have a good reason and know what you're doing.  
 
-| Parameter                | Value     | Description |
+| Parameter               | Default   | Description |
 |-------------------------|-----------|-------------|
 | `clk_pin`               | GPIO18    | SPI Clock pin |
 | `mosi_pin`              | GPIO23    | SPI MOSI pin |
