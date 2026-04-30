@@ -42,6 +42,35 @@ namespace esphome
             this->send_code();
         }
 
+        const char *DirectolorRadio::blind_action_to_string(BlindAction action)
+        {
+            switch (action)
+            {
+            case directolor_open:
+                return "Open";
+            case directolor_close:
+                return "Close";
+            case directolor_stop:
+                return "Stop";
+            case directolor_join:
+                return "Join";
+            case directolor_remove:
+                return "Remove";
+            case directolor_duplicate:
+                return "Duplicate";
+            case directolor_setFav:
+                return "Set Favorite";
+            case directolor_tiltOpen:
+                return "Tilt Open";
+            case directolor_tiltClose:
+                return "Tilt Close";
+            case directolor_toFav:
+                return "To Favorite";
+            default:
+                return "unknown";
+            }
+        }
+
         void DirectolorRadio::process_incoming_packet(const uint8_t *payload, uint8_t bytes)
         {
             // 1. Sniffing / Learning Mode
@@ -105,31 +134,7 @@ namespace esphome
                 payload[6] == this->sniffed_remote_code_[2] &&
                 payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x86)
             {
-
-                switch (payload[expected_bytes - 5])
-                {
-                case directolor_open:
-                    command = "Open";
-                    break;
-                case directolor_close:
-                    command = "Close";
-                    break;
-                case directolor_tiltOpen:
-                    command = "Tilt Open";
-                    break;
-                case directolor_tiltClose:
-                    command = "Tilt Close";
-                    break;
-                case directolor_stop:
-                    command = "Stop";
-                    break;
-                case directolor_toFav:
-                    command = "to Fav";
-                    break;
-                case directolor_setFav:
-                    command = "Store Favorite";
-                    break;
-                }
+                command = blind_action_to_string(static_cast<BlindAction>(payload[expected_bytes - 5]));
             }
 
             // Join/Remove Check (0x08)
@@ -137,16 +142,7 @@ namespace esphome
                 payload[6] == this->sniffed_remote_code_[2] &&
                 payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x08)
             {
-
-                switch (payload[expected_bytes - 4])
-                {
-                case directolor_join:
-                    command = "Join";
-                    break;
-                case directolor_remove:
-                    command = "Remove";
-                    break;
-                }
+                command = blind_action_to_string(static_cast<BlindAction>(payload[expected_bytes - 4]));
             }
 
             // Duplicate Check (0xC8)

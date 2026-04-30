@@ -141,35 +141,6 @@ namespace esphome
             }
         }
 
-        const char *blind_action_to_string(BlindAction action)
-        {
-            switch (action)
-            {
-            case directolor_open:
-                return "open";
-            case directolor_close:
-                return "close";
-            case directolor_stop:
-                return "stop";
-            case directolor_join:
-                return "join";
-            case directolor_remove:
-                return "remove";
-            case directolor_duplicate:
-                return "duplicate";
-            case directolor_setFav:
-                return "setFav";
-            case directolor_tiltOpen:
-                return "tiltOpen";
-            case directolor_tiltClose:
-                return "tiltClose";
-            case directolor_toFav:
-                return "toFav";
-            default:
-                return "unknown";
-            }
-        }
-
         void DirectolorCover::create_and_send_payload(BlindAction blind_action)
         {
             uint8_t payload[esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE];
@@ -194,7 +165,7 @@ namespace esphome
 
         void DirectolorCover::issue_shade_command(BlindAction blind_action)
         {
-            ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), blind_action_to_string(blind_action));
+            ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), this->radio_->blind_action_to_string(blind_action));
             this->current_blind_action_ = blind_action;
             this->outstanding_retry_count_ = this->hub_->get_code_attempts();
         }

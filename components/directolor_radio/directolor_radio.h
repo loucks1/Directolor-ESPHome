@@ -34,6 +34,8 @@ namespace esphome
             void set_listening(bool listening) { this->listening_ = listening; }
             bool is_listening() const { return listening_; }
 
+            const char *blind_action_to_string(BlindAction action);
+
         protected:
             nrf24::NRF24Component *radio_;
 
