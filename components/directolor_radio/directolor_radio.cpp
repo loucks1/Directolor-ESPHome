@@ -18,6 +18,8 @@ namespace esphome
 
             this->radio_->add_on_data_callback([this](const uint8_t *data, uint8_t len)
                                                { this->process_incoming_packet(data, len); });
+            this->radio_->setAutoAck(false);
+            this->radio_->setCRCLength(nRF24L01::RF24_CRC_DISABLED);
         }
 
         void DirectolorRadio::loop()
@@ -180,8 +182,6 @@ namespace esphome
             {
                 ESP_LOGI(TAG, "attempting to start listening");
                 this->radio_->stop_listening();
-                this->radio_->setAutoAck(false);
-                this->radio_->setCRCLength(nRF24L01::RF24_CRC_DISABLED);
                 this->radio_->set_address_width(5);
                 this->radio_->open_reading_pipe(1, 0x5555555555); // always uses pipe 0
                 ESP_LOGI(TAG, "searching for remote");
