@@ -157,6 +157,14 @@ namespace esphome
                 return "remove";
             case directolor_duplicate:
                 return "duplicate";
+            case directolor_setFav:
+                return "setFav";
+            case directolor_tiltOpen:
+                return "tiltOpen";
+            case directolor_tiltClose:
+                return "tiltClose";
+            case directolor_toFav:
+                return "toFav";
             default:
                 return "unknown";
             }
