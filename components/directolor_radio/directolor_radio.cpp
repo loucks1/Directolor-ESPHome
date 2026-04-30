@@ -232,10 +232,10 @@ namespace esphome
         void DirectolorRadio::send_code()
         {
             uint32_t now = millis();
-            if (this->current_sending_payload_.send_attempts == this->message_send_repeats_ && now - last_process_ < this->cooldown_)
+            if ((this->current_sending_payload_.send_attempts == this->message_send_repeats_) && (now - this->lastSendAttemptMillis_ < this->cooldown_))
                 return;
 
-            last_process_ = now;
+            this->lastSendAttemptMillis_ = now;
 
             if (!this->radio_->is_chip_connected())
                 return;
