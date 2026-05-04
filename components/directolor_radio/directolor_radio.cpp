@@ -18,8 +18,8 @@ namespace esphome
 
             this->radio_->add_on_data_callback([this](const uint8_t *data, uint8_t len)
                                                { this->process_incoming_packet(data, len); });
-            this->radio_->setAutoAck(false);
-            this->radio_->setCRCLength(nRF24L01::RF24_CRC_DISABLED);
+            this->radio_->set_auto_ack(false);
+            this->radio_->set_crc_length(nRF24L01::RF24_CRC_DISABLED);
         }
 
         void DirectolorRadio::loop()
@@ -33,7 +33,7 @@ namespace esphome
             if (!this->listening_ && this->CaptureState_ != REMOTE_STATE_NOT_STARTED)
             {
                 this->radio_->stop_listening();
-                this->radio_->powerDown();
+                this->radio_->power_down();
                 this->CaptureState_ = REMOTE_STATE_NOT_STARTED;
                 ESP_LOGI(TAG, "stopped listening - will not capture remote codes until re-enabled");
                 return;
@@ -199,7 +199,7 @@ namespace esphome
             {
                 this->CaptureState_ = REMOTE_STATE_NOT_STARTED;
                 this->radio_->stop_listening();
-                this->radio_->powerDown();
+                this->radio_->power_down();
                 return;
             }
             if (this->sniffed_remote_code_[0] || this->sniffed_remote_code_[1])
@@ -223,7 +223,7 @@ namespace esphome
             }
             else
             {
-                this->radio_->powerDown();
+                this->radio_->power_down();
             }
         }
 
@@ -250,7 +250,7 @@ namespace esphome
                              this->current_sending_payload_.send_attempts,
                              format_hex_pretty(this->current_sending_payload_.payload, esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE).c_str());
 
-                    this->radio_->powerUp();
+                    this->radio_->power_up();
                     this->radio_->stop_listening(); // put radio in TX mode
                     this->radio_->set_address_width(3);
                     this->radio_->open_writing_pipe(0x060406);
@@ -263,15 +263,15 @@ namespace esphome
                 unsigned long startMillis = millis();
                 while (--this->current_sending_payload_.send_attempts > 0)
                 {
-                    this->radio_->writeFast(this->current_sending_payload_.payload, this->radio_->getPayloadSize(), true); // we aren't waiting for an ACK, so we need to writeFast with multiCast set to true
+                    this->radio_->write_fast(this->current_sending_payload_.payload, this->radio_->get_payload_size(), true); // we aren't waiting for an ACK, so we need to writeFast with multiCast set to true
                     if (this->current_sending_payload_.send_attempts % 3 == 0)
                     {
-                        this->radio_->txStandBy();
+                        this->radio_->tx_standby();
                         if (millis() - startMillis > 25)
                             break;
                     }
                 }
-                this->radio_->txStandBy();
+                this->radio_->tx_standby();
                 if (this->current_sending_payload_.send_attempts == 0)
                 {
                     ESP_LOGV(TAG, "send code complete");
