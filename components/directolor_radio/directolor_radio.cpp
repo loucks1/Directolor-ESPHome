@@ -254,6 +254,7 @@ namespace esphome
                     this->radio_->set_address_width(3);
                     this->radio_->open_writing_pipe(0x060406);
                     this->radio_->power_up();
+                    delay(5); 
                 }
             }
             else
