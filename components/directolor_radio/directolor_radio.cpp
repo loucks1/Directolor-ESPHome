@@ -254,6 +254,9 @@ namespace esphome
                     this->radio_->stop_listening(); // put radio in TX mode
                     this->radio_->set_address_width(3);
                     this->radio_->open_writing_pipe(0x060406);
+
+                    if (esp_log_get_default_level() >= ESP_LOG_VERBOSE)
+                        this->dump_config();
                 }
             }
             else

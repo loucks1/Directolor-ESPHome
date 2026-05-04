@@ -3,7 +3,7 @@ esphome:
   friendly_name: development
 
 substitutions:
-  enable_directolor_remote_search: true
+  pa_level: HIGH
 
 esp32:
   board: esp32dev
@@ -47,8 +47,6 @@ nrf24:
 directolor_radio:
   id: my_radio_hub
   nrf24_id: my_nrf24    
-  directolor_code_attempts: 3
-  message_send_repeats: 513
 
 packages:
 
