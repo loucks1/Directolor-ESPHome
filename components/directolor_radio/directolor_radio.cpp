@@ -250,11 +250,10 @@ namespace esphome
                              this->current_sending_payload_.send_attempts,
                              format_hex_pretty(this->current_sending_payload_.payload, esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE).c_str());
 
+                    this->radio_->power_up();
                     this->radio_->stop_listening(); // put radio in TX mode
                     this->radio_->set_address_width(3);
                     this->radio_->open_writing_pipe(0x060406);
-                    this->radio_->power_up();
-                    delay(5); 
                 }
             }
             else
