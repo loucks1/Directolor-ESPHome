@@ -2,9 +2,6 @@ esphome:
   name: development
   friendly_name: development
 
-substitutions:
-  enable_directolor_remote_search: true
-
 esp32:
   board: esp32dev
   framework:
@@ -28,42 +25,23 @@ web_server:
 ota:
   platform: esphome
 
-spi:
-  - id: nrf24_spi
-    clk_pin: GPIO18
-    mosi_pin: GPIO23
-    miso_pin: GPIO19
-    interface: hardware
-
-# ====================== nRF24 RADIO ======================
-nrf24:
-  id: my_nrf24
-  spi_id: nrf24_spi
-  cs_pin: GPIO21
-  ce_pin: GPIO22
-  channel: 53
-  data_rate: 2MHz
-
-directolor_radio:
-  id: my_radio_hub
-  nrf24_id: my_nrf24    
-  directolor_code_attempts: 3
-  message_send_repeats: 513
-
 packages:
-
-  test_shade: !include
-    file: ./directolor_cover.yaml
-    vars:
-      id: test_shade
-      name: "Test Shade"
-      radio_hub_id: my_radio_hub   
-      radio_code: [0x06, 0x04, 0x05, 0x12]
-      tilt_supported: true
-      channel: 1
-      movement_duration: 10s
-      disable_favorite_support: true
-      disable_program_support: true
+  directolor:
+    url:  https://github.com/loucks1/Directolor-ESPHome
+    ref: feature/nrf24-espidf-integration
+    refresh: 1s
+    files:
+      - path: plumbing.yaml
+      - path: directolor_cover.yaml
+        vars:
+          id: test_shade
+          name: "Test Shade"
+          radio_code: [0x06, 0x04, 0x05, 0x12]
+          tilt_supported: true
+          channel: 1
+          movement_duration: 10s
+          disable_favorite_support: true
+          disable_program_support: true
 
 button:
   - platform: restart

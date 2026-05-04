@@ -184,10 +184,8 @@ namespace esphome
                 this->radio_->start_listening(); // put radio in RX mode
                 this->CaptureState_ = REMOTE_STATE_LEARNING;
                 ESP_LOGI(TAG, "started listening - press a button on your remote");
-                if (esp_log_get_default_level() >= ESP_LOG_VERBOSE)
-                {
-                    this->dump_config();
-                }
+                if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE)
+                    this->radio_->dump_config();
                 return true;
             }
             return false;
@@ -255,8 +253,11 @@ namespace esphome
                     this->radio_->set_address_width(3);
                     this->radio_->open_writing_pipe(0x060406);
 
-                    if (esp_log_get_default_level() >= ESP_LOG_VERBOSE)
+                    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE)
+                    {
                         this->dump_config();
+                        this->radio_->dump_config();
+                    }
                 }
             }
             else

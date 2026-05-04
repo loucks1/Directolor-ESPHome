@@ -16,7 +16,7 @@ esp32:
 api:
 
 logger:
-  level: DEBUG
+  level: VERBOSE
 
 wifi:
   ssid: !secret wifi_ssid
@@ -28,34 +28,15 @@ web_server:
 ota:
   platform: esphome
 
-spi:
-  - id: nrf24_spi
-    clk_pin: GPIO18
-    mosi_pin: GPIO23
-    miso_pin: GPIO19
-    interface: hardware
-
-# ====================== nRF24 RADIO ======================
-nrf24:
-  id: my_nrf24
-  spi_id: nrf24_spi
-  cs_pin: GPIO21
-  ce_pin: GPIO22
-  channel: 53
-  data_rate: 2MHz
-
-directolor_radio:
-  id: my_radio_hub
-  nrf24_id: my_nrf24    
-
 packages:
+  plumbing: !include
+    file: ./plumbing.yaml 
 
   test_shade: !include
     file: ./local_directolor_cover.yaml
     vars:
       id: test_shade
       name: "Test Shade"
-      radio_hub_id: my_radio_hub   
       radio_code: [0x06, 0x04, 0x05, 0x12]
       tilt_supported: true
       channel: 1
