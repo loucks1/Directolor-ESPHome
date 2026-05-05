@@ -4,10 +4,21 @@
 #include "esphome/components/directolor_radio/directolor_radio_types.h"
 #include "esphome/components/directolor_radio/directolor_radio.h"
 
+// ================================================
+//  DEPRECATION WARNING
+// ================================================
+#warning "=================================================================="
+#warning "⚠️  DIRECTOLOR-ESPHome COMPONENT IS DEPRECATED  ⚠️"
+#warning " "
+#warning "Please use the official/maintained ESP-IDF version instead."
+#warning "This component will be removed in a future release."
+#warning "=================================================================="
+
 namespace esphome
 {
   namespace directolor_cover
   {
+    [[deprecated("This component is deprecated. Use the ESP-IDF version instead.")]]
     class DirectolorCover : public cover::Cover, public Component
     {
     public:
