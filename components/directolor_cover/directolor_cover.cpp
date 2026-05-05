@@ -294,7 +294,7 @@ namespace esphome
                     payload[payloadOffset + j] = this->radio_code_[3];
                     break;
                 case 13 + offset:
-                    payload[payloadOffset + j] = this->command_random_ + 122;
+                    payload[payloadOffset + j] = this->command_random_ + (esp_random() % 256);
                     break;
                 case 14 + offset:
                     payload[payloadOffset + j] = this->radio_code_[2];
