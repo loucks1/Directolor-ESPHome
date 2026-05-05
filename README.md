@@ -1,3 +1,22 @@
+<div style="background-color: #FF4444; color: white; padding: 20px; border-radius: 10px; border: 4px solid #CC0000; text-align: center; margin: 20px 0;">
+
+<h1>⚠️ THIS COMPONENT IS DEPRECATED ⚠️</h1>
+
+<p style="font-size: 1.3em; margin: 15px 0;">
+  This Directolor component is no longer maintained.
+</p>
+
+<p style="font-size: 1.2em;">
+  Please switch to the <strong>ESP-IDF based version</strong> for better stability and future support.
+</p>
+
+<a href="https://github.com/loucks1/Directolor-ESPHome/tree/feature/nrf24-espidf-integration" style="color: white; font-weight: bold; text-decoration: underline;">
+  → Go to the new ESP-IDF Directolor Branch ←
+</a>
+
+</div>
+
+
 ESP32 + NRF24L01+ ESPHOME library to control Levolor blinds
 
 This is a library known to work with ESP32 and NRF24L01+. It allows direct control of Levolor blinds by replaying stored remote codes. The easiest way to use this is to install the library and open the Directolor example. You can then clone one of the Directolor remotes to a remote you own. Then you can program your shades to the new cloned remote or using Directolor and control the blinds with either Directolor or your own remote.
