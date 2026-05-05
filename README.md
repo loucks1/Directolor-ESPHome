@@ -16,6 +16,10 @@
 
 </div>
 
+<br/>
+<br/>
+<br/>
+Everything should still continue to work using the below instructions.
 
 ESP32 + NRF24L01+ ESPHOME library to control Levolor blinds
 
