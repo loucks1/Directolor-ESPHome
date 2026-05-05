@@ -27,11 +27,14 @@ enum BlindAction
   directolor_duplicate = 0x51
 };
 
+#warning "⚠️  Main branch of DIRECTOLOR-ESPHome COMPONENT IS DEPRECATED  ⚠️"
+#warning "⚠️  Use feature/nrf24-espidf-integration instead  ⚠️"
+
 namespace esphome
 {
   namespace nrf24l01_base
   {
-
+    [[deprecated("This component is deprecated. Use the ESP-IDF version instead.")]]
     class Nrf24l01_base : public Component
     {
     public:
