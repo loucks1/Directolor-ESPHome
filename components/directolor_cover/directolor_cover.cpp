@@ -144,26 +144,27 @@ namespace esphome
         void DirectolorCover::create_and_send_payload(BlindAction blind_action)
         {
             uint8_t payload[esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE];
-
             int length = this->get_radio_command(payload, blind_action);
+
+            if (length > esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE) {
+                ESP_LOGE(TAG, "payload length %d exceeds max %d", length, esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE);
+                return;
+            }
 
             uint16_t crc = crc16be((uint8_t *)payload, length, 0xFFFF, 0x755b, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
             ESP_LOGV(TAG, "payload: %s  crc: 0x%04X", format_hex_pretty(payload, length).c_str(), crc);
+    
             payload[length++] = crc >> 8;
-            payload[length] = crc & 0xFF;
+            payload[length++] = crc & 0xFF;
 
-            const int pad_start = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length;
+            // Right-align the `length` real bytes within the buffer, padding the
+            // leading bytes with 0x55 to train the shade receivers.
+            const int pad_len = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length;
+            std::memmove(payload + pad_len, payload, length); // shift real data to the end
+            std::memset(payload, 0x55, pad_len);               // fill the front with 0x55
 
-            for (int i = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - 1; i >= 0; i--)
-            {
-                if (i >= pad_start)
-                    payload[i] = payload[i - pad_start];
-                else
-                    payload[i] = 0x55;
-            }
-            
             this->hub_->sendPayload(payload);
-        }
+}
 
         void DirectolorCover::issue_shade_command(BlindAction blind_action)
         {
