@@ -88,7 +88,7 @@ namespace esphome
                                       { 
                                         this->issue_shade_command(directolor_stop); 
                                         ESP_LOGD(TAG, "Scheduled stop executed for %s", this->get_name().c_str()); });
-                    ESP_LOGD(TAG, "%s scheduled for stop after delay. Position: %.2f, Target: %.2f, Delay: %u ms", this->get_name().c_str(), this->position, pos, delay);
+                    ESP_LOGD(TAG, "%s scheduled for stop after delay. Position: %.2f, Target: %.2f, Delay: %lu ms", this->get_name().c_str(), this->position, pos, delay);
                 }
 
                 this->position = pos;
@@ -134,7 +134,7 @@ namespace esphome
                                       { 
                                         this->issue_shade_command(directolor_stop); 
                                         ESP_LOGD(TAG, "Tilt scheduled stop executed for %s", this->get_name().c_str()); });
-                    ESP_LOGD(TAG, "%s tilt scheduled for stop after delay. Current: %.2f, Target: %.2f, Delay: %u ms", this->get_name().c_str(), this->tilt, tilt_val, delay);
+                    ESP_LOGD(TAG, "%s tilt scheduled for stop after delay. Current: %.2f, Target: %.2f, Delay: %lu ms", this->get_name().c_str(), this->tilt, tilt_val, delay);
                 }
                 this->tilt = tilt_val;
                 this->publish_state();
@@ -152,14 +152,16 @@ namespace esphome
             payload[length++] = crc >> 8;
             payload[length] = crc & 0xFF;
 
-            for (int i = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE; i > 0; i--) // pad with leading 0x55 to train the shade receivers
-            {
-                if (i - (esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length) >= 0)
-                    payload[i - 1] = payload[i - (esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length)];
-                else
-                    payload[i - 1] = 0x55;
-            }
+            const int pad_start = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length;
 
+            for (int i = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - 1; i >= 0; i--)
+            {
+                if (i >= pad_start)
+                    payload[i] = payload[i - pad_start];
+                else
+                    payload[i] = 0x55;
+            }
+            
             this->hub_->sendPayload(payload);
         }
 
@@ -325,6 +327,8 @@ namespace esphome
                 return this->get_duplicate_radio_command(payload, blind_action);
             case directolor_setFav:
                 return this->get_set_fav_radio_command(payload, blind_action);
+            default:
+                break;
             }
             const uint8_t offset = 0;
             int payloadOffset = 0;
