@@ -12,6 +12,9 @@ namespace esphome
         static const char *TAG = "directolor_radio";
         static const uint8_t MATCHPATTERN[4] = {0xC0, 0X11, 0X00, 0X05}; // this is what we use to find out the codes for a new remote
 
+        /**
+         * @brief Component setup, registers radio data callback and configures CRC
+         */
         void DirectolorRadio::setup()
         {
             this->current_sending_payload_.send_attempts = 0;
@@ -22,6 +25,9 @@ namespace esphome
             this->radio_->set_crc_length(nRF24L01::RF24_CRC_DISABLED);
         }
 
+        /**
+         * @brief Component non-blocking loop, handles state transitions and sending code
+         */
         void DirectolorRadio::loop()
         {
             if (this->listening_ && this->CaptureState_ == REMOTE_STATE_NOT_STARTED)
@@ -71,6 +77,12 @@ namespace esphome
             }
         }
 
+        /**
+         * @brief Processes an incoming payload received from the NRF24 radio.
+         * Handling either learning mode sniffing or normal operation command receiving.
+         * @param payload Pointer to the received data
+         * @param bytes Length of the received data
+         */
         void DirectolorRadio::process_incoming_packet(const uint8_t *payload, uint8_t bytes)
         {
             // 1. Sniffing / Learning Mode
@@ -78,26 +90,16 @@ namespace esphome
             {
                 ESP_LOGV(TAG, "Checking payload for match: %s", format_hex_pretty(payload, bytes).c_str());
 
-                uint8_t foundPattern = 0;
-                for (int i = 0; i < bytes; i++)
+                for (int idx = 2; idx <= bytes - 9; idx++)
                 {
-                    if (payload[i] != MATCHPATTERN[foundPattern])
+                    if (memcmp(&payload[idx], MATCHPATTERN, 4) == 0)
                     {
-                        foundPattern = 0;
-                    }
-                    else
-                    {
-                        foundPattern++;
-                    }
+                        this->sniffed_remote_code_[0] = payload[idx - 2];
+                        this->sniffed_remote_code_[1] = payload[idx - 1];
+                        this->sniffed_remote_code_[2] = payload[idx + 7];
+                        this->sniffed_remote_code_[3] = payload[idx + 8];
 
-                    // Logic check: if pattern found, extract the address
-                    if (foundPattern > 3 && i > 4)
-                    {
-                        this->sniffed_remote_code_[0] = payload[i - 5];
-                        this->sniffed_remote_code_[1] = payload[i - 4];
-                        this->sniffed_remote_code_[2] = payload[i + 4];
-                        this->sniffed_remote_code_[3] = payload[i + 5];
-
+                        this->has_sniffed_code_ = true;
                         this->CaptureState_ = REMOTE_STATE_CAPTURED;
 
                         ESP_LOGI(TAG, "Found Remote with address: [0x%02X, 0x%02X, 0x%02X, 0x%02X]",
@@ -172,6 +174,10 @@ namespace esphome
             ESP_LOGCONFIG(TAG, "  Message Send Repeats: %d", this->message_send_repeats_);
         }
 
+        /**
+         * @brief Transitions the radio into sniffing mode, searching for a 4-byte pattern
+         * @return true if successfully entered learning mode
+         */
         bool DirectolorRadio::enterRemoteSearchMode()
         {
             if (this->radio_->is_chip_connected())
@@ -200,7 +206,7 @@ namespace esphome
                 this->radio_->power_down();
                 return;
             }
-            if (this->sniffed_remote_code_[0] || this->sniffed_remote_code_[1])
+            if (this->has_sniffed_code_)
             {
                 this->radio_->stop_listening();
                 this->radio_->set_address_width(3);
@@ -230,6 +236,10 @@ namespace esphome
             this->queue_.enqueue(payload, this->message_send_repeats_);
         }
 
+        /**
+         * @brief Non-blocking state machine for handling command transmissions.
+         * Pulled continuously during ESPHome loop(). Yields control back when in tx_standby.
+         */
         void DirectolorRadio::send_code()
         {
             uint32_t now = millis();
@@ -258,26 +268,40 @@ namespace esphome
                         this->dump_config();
                         this->radio_->dump_config();
                     }
+                    this->tx_is_standby_ = false;
                 }
             }
             else
             {
+                if (this->tx_is_standby_)
+                {
+                    if (millis() - this->tx_standby_start_ > 25)
+                    {
+                        this->tx_is_standby_ = false;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
                 ESP_LOGV(TAG, "sending code (attempts left: %d)", this->current_sending_payload_.send_attempts);
 
-                unsigned long startMillis = millis();
-                while (--this->current_sending_payload_.send_attempts > 0)
+                this->radio_->write_fast(this->current_sending_payload_.payload, this->radio_->get_payload_size(), true); // we aren't waiting for an ACK, so we need to writeFast with multiCast set to true
+                this->current_sending_payload_.send_attempts--;
+
+                if (this->current_sending_payload_.send_attempts > 0)
                 {
-                    this->radio_->write_fast(this->current_sending_payload_.payload, this->radio_->get_payload_size(), true); // we aren't waiting for an ACK, so we need to writeFast with multiCast set to true
                     if (this->current_sending_payload_.send_attempts % 3 == 0)
                     {
                         this->radio_->tx_standby();
-                        if (millis() - startMillis > 25)
-                            break;
+                        this->tx_is_standby_ = true;
+                        this->tx_standby_start_ = millis();
                     }
                 }
-                this->radio_->tx_standby();
-                if (this->current_sending_payload_.send_attempts == 0)
+                else
                 {
+                    this->radio_->tx_standby();
                     ESP_LOGV(TAG, "send code complete");
                     if (!queue_.dequeue(this->current_sending_payload_))
                         this->enterRemoteCaptureMode(); // go back and power down
