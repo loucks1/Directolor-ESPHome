@@ -4,6 +4,7 @@
 #include "esphome.h"
 #include "esp_random.h"
 #include <string>
+#include <cstring>
 
 namespace esphome
 {
