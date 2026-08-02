@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+echo "Setting up mock include paths..."
+mkdir -p mocks/esphome/components
+cp -r ../components/directolor_radio mocks/esphome/components/
+
 echo "Compiling tests..."
 
 g++ -std=c++14 -I./mocks \

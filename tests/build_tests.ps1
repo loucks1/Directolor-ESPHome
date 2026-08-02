@@ -4,6 +4,10 @@
 $Compiler = "g++"
 
 if (Get-Command $Compiler -ErrorAction SilentlyContinue) {
+    Write-Host "Setting up mock include paths..."
+    if (!(Test-Path "mocks\esphome\components")) { New-Item -ItemType Directory -Force -Path "mocks\esphome\components" | Out-Null }
+    Copy-Item -Path "..\components\directolor_radio" -Destination "mocks\esphome\components\" -Recurse -Force
+
     Write-Host "Compiling tests..."
     
     $SourceFiles = @(
