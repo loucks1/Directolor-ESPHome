@@ -1,10 +1,11 @@
 #pragma once
 
+#include "esphome/core/component.h"
 #include "esphome/components/directolor_radio/payload_queue.h"
 #include "esphome/components/directolor_radio/directolor_radio_types.h"
 #include "esphome/components/nrf24/nrf24.h"
-#include "esphome.h"
 #include <array>
+#include <cstdint>
 
 namespace esphome
 {

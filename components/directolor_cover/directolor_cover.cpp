@@ -1,4 +1,5 @@
 #include "directolor_cover.h"
+#include "esphome/components/directolor_radio/directolor_radio.h"
 #include <esphome/core/log.h>
 #include "esphome.h"
 #include "esp_random.h"

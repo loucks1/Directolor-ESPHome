@@ -1,14 +1,6 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include "esphome/core/component.h"
 
 unsigned long millis();
-
-namespace esphome {
-    class Component {
-    public:
-        virtual void setup() {}
-        virtual void loop() {}
-        virtual void dump_config() {}
-    };
-}

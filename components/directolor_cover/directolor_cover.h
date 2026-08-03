@@ -2,10 +2,20 @@
 #include "esphome/core/component.h"
 #include "esphome/components/cover/cover.h"
 #include "esphome/components/directolor_radio/directolor_radio_types.h"
-#include "esphome/components/directolor_radio/directolor_radio.h"
+#include <array>
+#include <cstdint>
+#include <vector>
+#include <algorithm>
 
 namespace esphome
 {
+  namespace directolor_radio
+  {
+    // Forward declaration — avoid including directolor_radio.h here so esphome.h
+    // can pull in this cover header without a circular include cycle.
+    class DirectolorRadio;
+  }
+
   namespace directolor_cover
   {
     class DirectolorCover : public cover::Cover, public Component
