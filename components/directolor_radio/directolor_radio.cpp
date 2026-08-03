@@ -2,7 +2,6 @@
 
 #include <esphome/core/log.h>
 #include "esphome.h"
-#include "esp_random.h"
 #include <string>
 #include <cstring>
 
@@ -122,22 +121,16 @@ namespace esphome
                 return; // Invalid or incomplete payload
             }
 
-            // Debounce: ignore repeated packets within 500ms
-            uint32_t now = millis();
-            if (now - this->lastMillis_ < 500)
-            {
-                return;
-            }
-            this->lastMillis_ = now;
-
             const char *command = "ERROR";
+            uint8_t action_byte = 0xFF;
 
             // Standard Command Check (0x86)
             if (payload[4] == 0xFF && payload[5] == 0xFF &&
                 payload[6] == this->sniffed_remote_code_[2] &&
                 payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x86)
             {
-                command = blind_action_to_string(static_cast<BlindAction>(payload[expected_bytes - 5]));
+                action_byte = payload[expected_bytes - 5];
+                command = blind_action_to_string(static_cast<BlindAction>(action_byte));
             }
 
             // Join/Remove Check (0x08)
@@ -145,7 +138,8 @@ namespace esphome
                 payload[6] == this->sniffed_remote_code_[2] &&
                 payload[7] == this->sniffed_remote_code_[3] && payload[8] == 0x08)
             {
-                command = blind_action_to_string(static_cast<BlindAction>(payload[expected_bytes - 4]));
+                action_byte = payload[expected_bytes - 4];
+                command = blind_action_to_string(static_cast<BlindAction>(action_byte));
             }
 
             // Duplicate Check (0xC8)
@@ -154,6 +148,7 @@ namespace esphome
                 payload[16] == this->sniffed_remote_code_[2] &&
                 payload[17] == this->sniffed_remote_code_[3] && payload[18] == 0xC8)
             {
+                action_byte = directolor_duplicate;
                 command = "Duplicate";
             }
 
@@ -161,6 +156,15 @@ namespace esphome
             {
                 return;
             }
+
+            // Debounce only identical repeated actions (physical remotes blast many copies)
+            uint32_t now = millis();
+            if (action_byte == this->last_rx_action_ && (now - this->last_rx_millis_ < RX_DEBOUNCE_MS))
+            {
+                return;
+            }
+            this->last_rx_millis_ = now;
+            this->last_rx_action_ = action_byte;
 
             // Log success
             char addr_buffer[12];
@@ -173,6 +177,7 @@ namespace esphome
             ESP_LOGCONFIG(TAG, "Directolor Radio:");
             ESP_LOGCONFIG(TAG, "  Code Attempts: %d", this->code_attempts_);
             ESP_LOGCONFIG(TAG, "  Message Send Repeats: %d", this->message_send_repeats_);
+            ESP_LOGCONFIG(TAG, "  Inter-payload Cooldown: %d ms", this->cooldown_);
         }
 
         /**
@@ -219,6 +224,7 @@ namespace esphome
                 this->radio_->open_reading_pipe(1, capture_addr);
 
                 this->radio_->start_listening(); // put radio in RX mode
+                this->CaptureState_ = REMOTE_STATE_CAPTURED;
                 ESP_LOGI(TAG, "Now listening for 3-byte payloads on address: [%02X, %02X, %02X]",
                          capture_addr[0], capture_addr[1], capture_addr[2]);
             }
@@ -232,80 +238,87 @@ namespace esphome
             }
         }
 
-        void DirectolorRadio::sendPayload(uint8_t *payload)
+        bool DirectolorRadio::sendPayload(const uint8_t *payload)
         {
-            this->queue_.enqueue(payload, this->message_send_repeats_);
+            if (!this->queue_.enqueue(payload, this->message_send_repeats_))
+            {
+                ESP_LOGW(TAG, "Payload queue full (capacity=%u); dropping command",
+                         static_cast<unsigned>(PayloadQueue::capacity()));
+                return false;
+            }
+            return true;
         }
 
         /**
          * @brief Non-blocking state machine for handling command transmissions.
-         * Pulled continuously during ESPHome loop(). Yields control back when in tx_standby.
+         *
+         * Restores dense RF bursts (up to TX_BURST_BUDGET_MS of write_fast calls per
+         * loop iteration) while still yielding so ESPHome can service WiFi/API.
+         * Cooldown applies between distinct queued payloads, not between individual
+         * packet repeats within a payload.
          */
         void DirectolorRadio::send_code()
         {
-            uint32_t now = millis();
-            if ((this->current_sending_payload_.send_attempts == this->message_send_repeats_) && (now - this->lastSendAttemptMillis_ < this->cooldown_))
-                return;
-
-            this->lastSendAttemptMillis_ = now;
-
             if (!this->radio_->is_chip_connected())
                 return;
-            if (this->current_sending_payload_.send_attempts == 0)
+
+            uint32_t now = millis();
+
+            // Acquire next payload if idle
+            if (this->current_sending_payload_.send_attempts <= 0)
             {
-                if (this->queue_.dequeue(this->current_sending_payload_))
+                // Cooldown between distinct code payloads (not between packet repeats)
+                if (this->last_payload_finish_ms_ != 0 &&
+                    (now - this->last_payload_finish_ms_ < this->cooldown_))
                 {
-                    ESP_LOGV(TAG, "Processing - send_attempts: %d: %s",
-                             this->current_sending_payload_.send_attempts,
-                             format_hex_pretty(this->current_sending_payload_.payload, esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE).c_str());
+                    return;
+                }
 
-                    this->radio_->power_up();
-                    this->radio_->stop_listening(); // put radio in TX mode
-                    this->radio_->set_address_width(3);
-                    this->radio_->open_writing_pipe(0x060406);
+                if (!this->queue_.dequeue(this->current_sending_payload_))
+                    return;
 
-                    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE)
-                    {
-                        this->dump_config();
-                        this->radio_->dump_config();
-                    }
-                    this->tx_is_standby_ = false;
+                ESP_LOGV(TAG, "Processing - send_attempts: %d: %s",
+                         this->current_sending_payload_.send_attempts,
+                         format_hex_pretty(this->current_sending_payload_.payload, MAX_NRF_PAYLOAD_SIZE).c_str());
+
+                this->radio_->power_up();
+                this->radio_->stop_listening(); // put radio in TX mode
+                this->radio_->set_address_width(3);
+                this->radio_->open_writing_pipe(0x060406);
+
+                if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE)
+                {
+                    this->dump_config();
+                    this->radio_->dump_config();
                 }
             }
-            else
-            {
-                if (this->tx_is_standby_)
-                {
-                    if (millis() - this->tx_standby_start_ > 25)
-                    {
-                        this->tx_is_standby_ = false;
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
 
+            // Dense burst: write as many packets as possible within the budget, then
+            // yield so ESPHome can service WiFi/API. Matches pre-nonblocking density.
+            const uint32_t burst_start = millis();
+            while (this->current_sending_payload_.send_attempts > 0)
+            {
                 ESP_LOGV(TAG, "sending code (attempts left: %d)", this->current_sending_payload_.send_attempts);
 
-                this->radio_->write_fast(this->current_sending_payload_.payload, this->radio_->get_payload_size(), true); // we aren't waiting for an ACK, so we need to writeFast with multiCast set to true
+                this->radio_->write_fast(this->current_sending_payload_.payload, this->radio_->get_payload_size(), true);
                 this->current_sending_payload_.send_attempts--;
 
-                if (this->current_sending_payload_.send_attempts > 0)
-                {
-                    if (this->current_sending_payload_.send_attempts % 3 == 0)
-                    {
-                        this->radio_->tx_standby();
-                        this->tx_is_standby_ = true;
-                        this->tx_standby_start_ = millis();
-                    }
-                }
-                else
+                if (this->current_sending_payload_.send_attempts == 0)
                 {
                     this->radio_->tx_standby();
+                    this->last_payload_finish_ms_ = millis();
                     ESP_LOGV(TAG, "send code complete");
-                    if (!queue_.dequeue(this->current_sending_payload_))
-                        this->enterRemoteCaptureMode(); // go back and power down
+                    if (this->queue_.isEmpty())
+                        this->enterRemoteCaptureMode();
+                    return;
+                }
+
+                // Flush the TX FIFO every 3 packets; yield when burst budget expires
+                if (this->current_sending_payload_.send_attempts % 3 == 0)
+                {
+                    this->radio_->tx_standby();
+                    if (millis() - burst_start >= TX_BURST_BUDGET_MS)
+                        return;
                 }
             }
         }

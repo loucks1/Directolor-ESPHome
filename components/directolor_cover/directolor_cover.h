@@ -29,25 +29,20 @@ namespace esphome
       cover::CoverTraits get_traits() override;
       void control(const cover::CoverCall &call) override;
       void setup() override;
-      void loop() override;
 
     protected:
-      directolor_radio::DirectolorRadio *hub_;
+      directolor_radio::DirectolorRadio *hub_{nullptr};
       int get_radio_command(uint8_t *payload, BlindAction blind_action);
       int get_group_radio_command(uint8_t *payload, BlindAction blind_action);
       int get_duplicate_radio_command(uint8_t *payload, BlindAction blind_action);
       int get_set_fav_radio_command(uint8_t *payload, BlindAction blind_action);
       std::array<uint8_t, 4> radio_code_{{0x06, 0x04, 0x05, 0x12}};
-      uint8_t command_random_;
-      uint32_t movement_duration_ms_ = 0;
-      bool tilt_supported_ = false;
-      uint8_t channel_;
-
-      float current_position_;
+      uint8_t command_random_{0};
+      uint32_t movement_duration_ms_{0};
+      bool tilt_supported_{false};
+      uint8_t channel_{1};
 
       void create_and_send_payload(BlindAction blind_action);
-      BlindAction current_blind_action_;
-      int outstanding_retry_count_ = 0;
     };
   }; // namespace directolor_cover
 } // namespace esphome

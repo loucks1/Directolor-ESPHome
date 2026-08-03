@@ -2,6 +2,8 @@
 #include <esphome/core/log.h>
 #include "esphome.h"
 #include "esp_random.h"
+#include <cstring>
+#include <cmath>
 #include <string>
 
 namespace esphome
@@ -9,7 +11,6 @@ namespace esphome
     namespace directolor_cover
     {
         static const char *TAG = "directolor_cover";
-        static inline uint32_t last_millis = 0;
 
         void DirectolorCover::dump_config()
         {
@@ -34,24 +35,6 @@ namespace esphome
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", this->get_name().c_str());
             this->command_random_ = esp_random() % 256;
-        }
-
-        void DirectolorCover::loop()
-        {
-            while (this->outstanding_retry_count_ > 0)
-            {
-                create_and_send_payload(this->current_blind_action_);
-
-                if (this->current_blind_action_ == directolor_join || this->current_blind_action_ == directolor_remove)
-                {
-                    create_and_send_payload(directolor_duplicate);
-                    this->outstanding_retry_count_ = 0; // don't retry join/remove commands since they are only needed once and can cause issues if repeated
-                    return;
-                }
-
-                if (this->outstanding_retry_count_-- == this->hub_->get_code_attempts())
-                    return;
-            }
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
@@ -84,11 +67,11 @@ namespace esphome
 
                     uint32_t delay = static_cast<uint32_t>(this->movement_duration_ms_ * std::abs(this->position - pos));
 
-                    this->set_timeout("delayed_stop", delay, [this, pos, delay]()
-                                      { 
-                                        this->issue_shade_command(directolor_stop); 
+                    this->set_timeout("delayed_stop", delay, [this, pos]()
+                                      {
+                                        this->issue_shade_command(directolor_stop);
                                         ESP_LOGD(TAG, "Scheduled stop executed for %s", this->get_name().c_str()); });
-                    ESP_LOGD(TAG, "%s scheduled for stop after delay. Position: %.2f, Target: %.2f, Delay: %lu ms", this->get_name().c_str(), this->position, pos, delay);
+                    ESP_LOGD(TAG, "%s scheduled for stop after delay. Position: %.2f, Target: %.2f, Delay: %lu ms", this->get_name().c_str(), this->position, pos, (unsigned long)delay);
                 }
 
                 this->position = pos;
@@ -130,11 +113,11 @@ namespace esphome
 
                     uint32_t delay = static_cast<uint32_t>(esphome::directolor_radio::DEFAULT_TILT_DURATION_MS * std::abs(this->tilt - tilt_val));
 
-                    this->set_timeout("delayed_stop", delay, [this, tilt_val, delay]()
-                                      { 
-                                        this->issue_shade_command(directolor_stop); 
+                    this->set_timeout("delayed_stop", delay, [this]()
+                                      {
+                                        this->issue_shade_command(directolor_stop);
                                         ESP_LOGD(TAG, "Tilt scheduled stop executed for %s", this->get_name().c_str()); });
-                    ESP_LOGD(TAG, "%s tilt scheduled for stop after delay. Current: %.2f, Target: %.2f, Delay: %lu ms", this->get_name().c_str(), this->tilt, tilt_val, delay);
+                    ESP_LOGD(TAG, "%s tilt scheduled for stop after delay. Current: %.2f, Target: %.2f, Delay: %lu ms", this->get_name().c_str(), this->tilt, tilt_val, (unsigned long)delay);
                 }
                 this->tilt = tilt_val;
                 this->publish_state();
@@ -146,173 +129,189 @@ namespace esphome
             uint8_t payload[esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE];
             int length = this->get_radio_command(payload, blind_action);
 
-            if (length > esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE) {
-                ESP_LOGE(TAG, "payload length %d exceeds max %d", length, esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE);
+            if (length <= 0 || length > static_cast<int>(esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE))
+            {
+                ESP_LOGE(TAG, "payload length %d exceeds max %d", length, static_cast<int>(esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE));
                 return;
             }
 
-            uint16_t crc = crc16be((uint8_t *)payload, length, 0xFFFF, 0x755b, false, false); // took some time to figure this out.  big thanks to CRC RevEng by Gregory Cook!!!!  CRC is calculated over the whole payload, including radio id at start.
+            // CRC is calculated over the whole payload, including radio id at start.
+            // Big thanks to CRC RevEng by Gregory Cook.
+            uint16_t crc = crc16be((uint8_t *)payload, length, 0xFFFF, 0x755b, false, false);
             ESP_LOGV(TAG, "payload: %s  crc: 0x%04X", format_hex_pretty(payload, length).c_str(), crc);
-    
+
             payload[length++] = crc >> 8;
             payload[length++] = crc & 0xFF;
 
-            // Right-align the `length` real bytes within the buffer, padding the
-            // leading bytes with 0x55 to train the shade receivers.
-            const int pad_len = esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE - length;
-            std::memmove(payload + pad_len, payload, length); // shift real data to the end
-            std::memset(payload, 0x55, pad_len);               // fill the front with 0x55
+            // Right-align the real bytes within the buffer, padding the leading bytes
+            // with 0x55 to train the shade receivers.
+            const int pad_len = static_cast<int>(esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE) - length;
+            if (pad_len > 0)
+            {
+                std::memmove(payload + pad_len, payload, length);
+                std::memset(payload, 0x55, pad_len);
+            }
 
-            this->hub_->sendPayload(payload);
-}
+            if (!this->hub_->sendPayload(payload))
+            {
+                ESP_LOGW(TAG, "Failed to enqueue command for '%s' (queue full)", this->get_name().c_str());
+            }
+        }
 
         void DirectolorCover::issue_shade_command(BlindAction blind_action)
         {
             ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", this->get_name().c_str(), this->hub_->blind_action_to_string(blind_action));
-            this->current_blind_action_ = blind_action;
-            this->outstanding_retry_count_ = this->hub_->get_code_attempts();
+
+            // Join/remove are one-shot and always followed by a duplicate pairing frame.
+            // Repeating them can re-trigger programming on the blind.
+            if (blind_action == directolor_join || blind_action == directolor_remove)
+            {
+                create_and_send_payload(blind_action);
+                create_and_send_payload(directolor_duplicate);
+                return;
+            }
+
+            // Enqueue each code attempt immediately. Each attempt gets a unique
+            // random/CRC so the shade treats them as distinct retransmissions.
+            const uint8_t attempts = this->hub_->get_code_attempts();
+            for (uint8_t i = 0; i < attempts; i++)
+            {
+                create_and_send_payload(blind_action);
+            }
         }
 
         static constexpr uint8_t duplicatePrototype[] = {0XFF, 0XFF, 0xC0, 0X12, 0X80, 0X0D, 0x67, 0XFF, 0XFF, 0XC4, 0X05, 0XB1, 0XEC, 0X1D, 0XE3, 0X98, 0x8B, 0X2D, 0XDE, 0X00, 0XEF, 0XC8}; // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
 
         int DirectolorCover::get_duplicate_radio_command(uint8_t *payload, BlindAction blind_action)
         {
-            const uint8_t offset = 0;
-            int payloadOffset = 0;
-            // int uniqueBytesOffset = i * DUPLICATE_CODE_UNIQUE_BYTES;
-            for (int j = 0; j < sizeof(duplicatePrototype); j++)
+            (void)blind_action;
+            for (size_t j = 0; j < sizeof(duplicatePrototype); j++)
             {
-                switch (j) // 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23
+                switch (j)
                 {
-                case 6 + offset:
-                    payload[payloadOffset + j] = command_random_++;
+                case 6:
+                    payload[j] = command_random_++;
                     break;
-                case 9 + offset:
-                    payload[payloadOffset + j] = 0x06;
+                case 9:
+                    payload[j] = 0x06;
                     break;
-                case 10 + offset:
-                    payload[payloadOffset + j] = 0x03;
+                case 10:
+                    payload[j] = 0x03;
                     break;
-                case 11 + offset:
-                    payload[payloadOffset + j] = 0x20;
+                case 11:
+                    payload[j] = 0x20;
                     break;
-                case 12 + offset:
-                    payload[payloadOffset + j] = 0x05;
+                case 12:
+                    payload[j] = 0x05;
                     break;
-                case 13 + offset:
-                    payload[payloadOffset + j] = 0x12;
+                case 13:
+                    payload[j] = 0x12;
                     break;
-                case 14 + offset:
-                    payload[payloadOffset + j] = 0x03;
+                case 14:
+                    payload[j] = 0x03;
                     break;
-                case 15 + offset:
-                    payload[payloadOffset + j] = 0xAC;
+                case 15:
+                    payload[j] = 0xAC;
                     break;
-                case 16 + offset:
-                    payload[payloadOffset + j] = 0x56;
+                case 16:
+                    payload[j] = 0x56;
                     break;
-                case 17 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[1];
+                case 17:
+                    payload[j] = this->radio_code_[1];
                     break;
-                case 18 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[0];
+                case 18:
+                    payload[j] = this->radio_code_[0];
                     break;
-                case 19 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[2];
+                case 19:
+                    payload[j] = this->radio_code_[2];
                     break;
-                case 20 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[3];
+                case 20:
+                    payload[j] = this->radio_code_[3];
                     break;
                 default:
-                    payload[payloadOffset + j] = duplicatePrototype[j];
+                    payload[j] = duplicatePrototype[j];
                     break;
                 }
             }
-            return sizeof(duplicatePrototype);
+            return static_cast<int>(sizeof(duplicatePrototype));
         }
 
         static constexpr uint8_t groupPrototype[] = {0X11, 0X11, 0xC0, 0X0A, 0X40, 0X05, 0X18, 0XFF, 0XFF, 0X8A, 0X91, 0X08, 0X03, 0X01}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
 
         int DirectolorCover::get_group_radio_command(uint8_t *payload, BlindAction blind_action)
         {
-            const uint8_t offset = 0;
-            int payloadOffset = 0;
-            for (int j = 0; j < sizeof(groupPrototype); j++)
+            for (size_t j = 0; j < sizeof(groupPrototype); j++)
             {
-                switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
+                switch (j)
                 {
-                case 0 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[0];
+                case 0:
+                    payload[j] = this->radio_code_[0];
                     break;
-                case 1 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[1];
+                case 1:
+                    payload[j] = this->radio_code_[1];
                     break;
-                case 6 + offset:
-                    payload[payloadOffset + j] = command_random_++;
+                case 6:
+                    payload[j] = command_random_++;
                     break;
-                case 9 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[2];
+                case 9:
+                    payload[j] = this->radio_code_[2];
                     break;
-                case 10 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[3];
+                case 10:
+                    payload[j] = this->radio_code_[3];
                     break;
-                case 12 + offset:
-                    payload[payloadOffset + j] = this->channel_;
+                case 12:
+                    payload[j] = this->channel_;
                     break;
-                case 13 + offset:
-                    payload[payloadOffset + j] = blind_action;
+                case 13:
+                    payload[j] = blind_action;
                     break;
                 default:
-                    payload[payloadOffset + j] = groupPrototype[j];
+                    payload[j] = groupPrototype[j];
                     break;
                 }
             }
-            return sizeof(groupPrototype);
+            return static_cast<int>(sizeof(groupPrototype));
         }
 
         static constexpr uint8_t setFavPrototype[] = {0X11, 0X11, 0xC0, 0X0F, 0X00, 0X05, 0XD1, 0XFF, 0XFF, 0XB0, 0X51, 0X86, 0X04, 0XB8, 0XB0, 0X51, 0X63, 0X49, 0X00}; // 0, 1, 6, 9, 10, 12, 13, 14, 15
 
         int DirectolorCover::get_set_fav_radio_command(uint8_t *payload, BlindAction blind_action)
         {
-            const uint8_t offset = 0;
-            int payloadOffset = 0;
-            int j = 0;
-            while (j + payloadOffset < esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE)
+            (void)blind_action;
+            for (size_t j = 0; j < sizeof(setFavPrototype); j++)
             {
-                switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
+                switch (j)
                 {
-                case 0 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[0];
+                case 0:
+                    payload[j] = this->radio_code_[0];
                     break;
-                case 1 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[1];
+                case 1:
+                    payload[j] = this->radio_code_[1];
                     break;
-                case 6 + offset:
-                    payload[payloadOffset + j] = this->command_random_++;
+                case 6:
+                    payload[j] = this->command_random_++;
                     break;
-                case 9 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[2];
+                case 9:
+                    payload[j] = this->radio_code_[2];
                     break;
-                case 10 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[3];
+                case 10:
+                    payload[j] = this->radio_code_[3];
                     break;
-                case 13 + offset:
-                    payload[payloadOffset + j] = this->command_random_ + (esp_random() % 256);
+                case 13:
+                    payload[j] = this->command_random_ + (esp_random() % 256);
                     break;
-                case 14 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[2];
+                case 14:
+                    payload[j] = this->radio_code_[2];
                     break;
-                case 15 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[3];
+                case 15:
+                    payload[j] = this->radio_code_[3];
                     break;
                 default:
-                    payload[payloadOffset + j] = setFavPrototype[j];
+                    payload[j] = setFavPrototype[j];
                     break;
                 }
-                j++;
             }
-
-            return sizeof(setFavPrototype) + payloadOffset;
+            return static_cast<int>(sizeof(setFavPrototype));
         }
 
         static constexpr uint8_t commandPrototype[] = {0X11, 0X11, 0xC0, 0X10, 0X00, 0X05, 0XBC, 0XFF, 0XFF, 0X8A, 0X91, 0X86, 0X06, 0X99, 0X01, 0X00, 0X8A, 0X91, 0X52, 0X53, 0X00};
@@ -331,53 +330,50 @@ namespace esphome
             default:
                 break;
             }
-            const uint8_t offset = 0;
-            int payloadOffset = 0;
-            int j = 0;
-            while (j + payloadOffset < esphome::directolor_radio::MAX_NRF_PAYLOAD_SIZE)
+
+            for (size_t j = 0; j < sizeof(commandPrototype); j++)
             {
-                switch (j) // 0, 1, 6, 9, 10, 12, 13, 14, 15
+                switch (j)
                 {
-                case 0 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[0];
+                case 0:
+                    payload[j] = this->radio_code_[0];
                     break;
-                case 1 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[1];
+                case 1:
+                    payload[j] = this->radio_code_[1];
                     break;
-                case 6 + offset:
-                    payload[payloadOffset + j] = this->command_random_++;
+                case 6:
+                    payload[j] = this->command_random_++;
                     break;
-                case 9 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[2];
+                case 9:
+                    payload[j] = this->radio_code_[2];
                     break;
-                case 10 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[3];
+                case 10:
+                    payload[j] = this->radio_code_[3];
                     break;
-                case 13 + offset:
-                    payload[payloadOffset + j] = this->command_random_ + (esp_random() % 256);
+                case 13:
+                    payload[j] = this->command_random_ + (esp_random() % 256);
                     break;
-                case 14 + offset:
-                    payload[j + payloadOffset++] = this->channel_;
+                case 14:
+                    // Channel overrides the prototype placeholder; length field accounts for it.
+                    payload[j] = this->channel_;
                     payload[3]++;
-                    payloadOffset--;
                     break;
-                case 16 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[2];
+                case 16:
+                    payload[j] = this->radio_code_[2];
                     break;
-                case 17 + offset:
-                    payload[payloadOffset + j] = this->radio_code_[3];
+                case 17:
+                    payload[j] = this->radio_code_[3];
                     break;
-                case 19 + offset:
-                    payload[payloadOffset + j] = blind_action;
+                case 19:
+                    payload[j] = blind_action;
                     break;
                 default:
-                    payload[payloadOffset + j] = commandPrototype[j];
+                    payload[j] = commandPrototype[j];
                     break;
                 }
-                j++;
             }
 
-            return sizeof(commandPrototype) + payloadOffset;
+            return static_cast<int>(sizeof(commandPrototype));
         }
 
     } // namespace directolor_cover

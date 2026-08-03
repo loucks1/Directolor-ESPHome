@@ -33,8 +33,8 @@ You can include multiple `- path: directolor_cover.yaml` sections — typically 
 |-----------------------------|-------------|
 | `id`                        | Any valid ESPHome ID (used internally to reference this cover) |
 | `name`                      | Friendly name for the shade in Home Assistant |
-| `radio_code`                | 6-byte radio code in hex (e.g. `0x1234567890AB`). Use random values and join your blind to it. |
-| `channel`                   | Channel number of the blind on your original remote (usually 1–15) |
+| `radio_code`                | 4-byte radio code as a hex list (e.g. `[0x11, 0x11, 0x38, 0x28]`). Clone from logs or use random values and join your blind to it. |
+| `channel`                   | Channel number of the blind on your original remote (1–15) |
 | `movement_duration`         | Time it takes for the blind to fully open or close (e.g. `18s`). Omit this if you only want basic open/close (no position control). |
 | `tilt_supported`            | `true` if the blind supports tilt functions |
 | `disable_favorite_support`  | Set to `true` to disable "Go to Favorite" and "Set Favorite" buttons in Home Assistant and ESPHome webserver (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3 |
@@ -49,13 +49,13 @@ Below are substitutions that you can use to change pins and default behavior.  U
 | `miso_pin`              | GPIO19    | SPI MISO pin |
 | `cs_pin`                | GPIO21    | Chip Select (CS) pin for the nRF24 module |
 | `ce_pin`                | GPIO22    | Chip Enable (CE) pin for the nRF24 module |
-| `payload_send_attempts` | 3         | Number of transmission attempts per payload |
-| `payload_send_repeats`  | 513       | Number of times each payload is repeated (affects reliability vs speed) |
-| `intermessage_cooldown` | 30        | ms between each attempt |
-| `pa_level`              | HIGH      | NRF24L01+ transmit level (MIN, LOW, HIGH, MAX)
-| `rf_datarate`           | 1MBPS     | NRF24L01+ data rate (250KBPS, 1MBPS, 2MBPS) |
+| `payload_send_attempts` | 3         | Number of distinct code payloads generated per command (each with its own CRC/random) |
+| `payload_send_repeats`  | 513       | Number of times each payload is repeated on air (reliability vs speed) |
+| `intermessage_cooldown` | 30        | ms pause between successive distinct payloads (not between packet repeats) |
+| `pa_level`              | MAX       | NRF24L01+ transmit level (MIN, LOW, HIGH, MAX) |
+| `data_rate`             | 2MHz      | NRF24L01+ data rate (e.g. 1MHz, 2MHz) |
 
-Each time you send a code, Directolor will generate {payload_send_attempts} payloads to send on the radio.  Each of these is a separate command (open, close, etc) with a separate CRC.  It will then send {payload_send_repeats} copies of each generated payload with {intermessage_cooldown} ms delay between. 
+Each time you send a code, Directolor will generate `{payload_send_attempts}` payloads (separate CRCs). Each payload is transmitted `{payload_send_repeats}` times in dense bursts (yielding every ~25 ms so ESPHome stays responsive). `{intermessage_cooldown}` ms elapses between those distinct payloads.
 
 
 ```yaml
@@ -63,7 +63,7 @@ Each time you send a code, Directolor will generate {payload_send_attempts} payl
 
   directolor:
     url:  https://github.com/loucks1/Directolor-ESPHome
-    ref: feature/nrf24-espidf-integration
+    ref: feature/nrf24-optimizations
     refresh: 1s
     files:
       - path: plumbing.yaml

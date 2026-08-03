@@ -1,11 +1,8 @@
 #ifndef PAYLOAD_QUEUE_H
 #define PAYLOAD_QUEUE_H
 
-#include <cstdint> // For uint8_t
+#include <cstdint>
 #include "directolor_radio_types.h"
-
-// Define the maximum queue size
-#define QUEUE_SIZE 100
 
 // Struct to hold a single payload and its metadata
 struct PayloadEntry {
@@ -27,11 +24,17 @@ public:
   // Check if the queue is empty
   bool isEmpty() const;
 
+  // Number of queued payloads
+  uint8_t size() const { return count_; }
+
+  // Maximum capacity
+  static constexpr size_t capacity() { return esphome::directolor_radio::PAYLOAD_QUEUE_SIZE; }
+
 private:
-  PayloadEntry buffer_[QUEUE_SIZE]; // Fixed-size array of payload entries
-  uint8_t head_;                    // Index of the next item to dequeue
-  uint8_t tail_;                    // Index where the next item will be enqueued
-  uint8_t count_;                   // Number of items in the queue
+  PayloadEntry buffer_[esphome::directolor_radio::PAYLOAD_QUEUE_SIZE];
+  uint8_t head_;  // Index of the next item to dequeue
+  uint8_t tail_;  // Index where the next item will be enqueued
+  uint8_t count_; // Number of items in the queue
 };
 
 #endif // PAYLOAD_QUEUE_H

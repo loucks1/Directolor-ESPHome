@@ -25,7 +25,12 @@ namespace esphome
         static constexpr size_t MAX_NRF_PAYLOAD_SIZE = 32;
         static constexpr uint8_t REMOTE_CHANNELS = 6;
         static constexpr uint32_t DEFAULT_TILT_DURATION_MS = 5000;
-        // static constexpr size_t MAX_HEX_LOG_BUFFER_SIZE = MAX_NRF_PAYLOAD_SIZE * 3;
+        /// Wall-time budget for dense TX bursts per loop() call (ms).
+        static constexpr uint32_t TX_BURST_BUDGET_MS = 25;
+        /// Ignore duplicate RX of the same action within this window (ms).
+        static constexpr uint32_t RX_DEBOUNCE_MS = 500;
+        /// Max queued distinct code payloads (each cover multiplies by code_attempts).
+        static constexpr size_t PAYLOAD_QUEUE_SIZE = 16;
 
     } // namespace directolor_radio
 } // namespace esphome

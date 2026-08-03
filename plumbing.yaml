@@ -8,7 +8,10 @@ substitutions:
   ce_pin: GPIO22
   payload_send_attempts: 3
   payload_send_repeats: 513
+  intermessage_cooldown: 30
   pa_level: MAX
+  # NRF24 data rate (component accepts values like 1MHz / 2MHz)
+  data_rate: 2MHz
 
 spi:
   - id: nrf24_spi
@@ -23,7 +26,7 @@ nrf24:
   cs_pin: ${cs_pin}
   ce_pin: ${ce_pin}
   channel: 53
-  data_rate: 2MHz
+  data_rate: ${data_rate}
   pa_level: ${pa_level}
 
 directolor_radio:
@@ -31,6 +34,7 @@ directolor_radio:
   nrf24_id: my_nrf24
   directolor_code_attempts: ${payload_send_attempts}
   message_send_repeats: ${payload_send_repeats}
+  intermessage_cooldown: ${intermessage_cooldown}
 
 switch:
   - platform: template

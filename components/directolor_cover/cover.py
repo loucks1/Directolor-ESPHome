@@ -24,7 +24,7 @@ CONFIG_SCHEMA = cover.cover_schema(DirectolorCover).extend({
         cv.Length(min=4, max=4),
     ),
     cv.Optional("movement_duration", default="0s"): cv.positive_time_period_seconds,
-    cv.Required("channel"): cv.int_range(min=1, max=63),
+    cv.Required("channel"): cv.int_range(min=1, max=15),
     cv.Optional("tilt_supported", default=False): cv.boolean,
 }).extend(cv.COMPONENT_SCHEMA)
 
