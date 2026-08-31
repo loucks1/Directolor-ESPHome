@@ -34,7 +34,7 @@ namespace esphome
             /** @brief Sets the number of packet repeats per send attempt */
             void set_message_send_repeats(uint16_t repeats) { this->message_send_repeats_ = repeats; }
             /** @brief Sets the cooldown time (ms) between distinct queued payloads */
-            void set_cooldown(uint8_t cooldown) { this->cooldown_ = cooldown; }
+            void set_cooldown(uint16_t cooldown) { this->cooldown_ = cooldown; }
 
             /** @brief ESPHome component setup phase */
             void setup() override;
@@ -79,10 +79,11 @@ namespace esphome
 
             RemoteLearnState CaptureState_{REMOTE_STATE_NOT_STARTED};
 
-            uint8_t cooldown_{30};
+            uint16_t cooldown_{100};
             unsigned long last_rx_millis_{0};
             uint8_t last_rx_action_{0xFF};
             unsigned long last_payload_finish_ms_{0};
+            unsigned long radio_power_up_ms_{0};
 
             uint8_t code_attempts_{3};
             uint16_t message_send_repeats_{513};

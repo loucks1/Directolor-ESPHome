@@ -27,6 +27,8 @@ namespace esphome
         static constexpr uint32_t DEFAULT_TILT_DURATION_MS = 5000;
         /// Wall-time budget for dense TX bursts per loop() call (ms).
         static constexpr uint32_t TX_BURST_BUDGET_MS = 25;
+        /// nRF24 Tpd2stby: oscillator must settle after power-up before TX (ms).
+        static constexpr uint32_t TX_POWER_UP_SETTLE_MS = 5;
         /// Ignore duplicate RX of the same action within this window (ms).
         static constexpr uint32_t RX_DEBOUNCE_MS = 500;
         /// Max queued distinct code payloads (each cover multiplies by code_attempts).

@@ -51,11 +51,11 @@ Below are substitutions that you can use to change pins and default behavior.  U
 | `ce_pin`                | GPIO22    | Chip Enable (CE) pin for the nRF24 module |
 | `payload_send_attempts` | 3         | Number of distinct code payloads generated per command (each with its own CRC/random) |
 | `payload_send_repeats`  | 513       | Number of times each payload is repeated on air (reliability vs speed) |
-| `intermessage_cooldown` | 30        | ms pause between successive distinct payloads (not between packet repeats) |
+| `intermessage_cooldown` | 100       | ms pause between successive distinct payloads (not between packet repeats). Radio is powered down during this gap. |
 | `pa_level`              | MAX       | NRF24L01+ transmit level (MIN, LOW, HIGH, MAX) |
 | `data_rate`             | 2MHz      | NRF24L01+ data rate (e.g. 1MHz, 2MHz) |
 
-Each time you send a code, Directolor will generate `{payload_send_attempts}` payloads (separate CRCs). Each payload is transmitted `{payload_send_repeats}` times in dense bursts (yielding every ~25 ms so ESPHome stays responsive). `{intermessage_cooldown}` ms elapses between those distinct payloads.
+Each time you send a code, Directolor will generate `{payload_send_attempts}` payloads (separate CRCs). Each payload is transmitted `{payload_send_repeats}` times in dense bursts (yielding every ~25 ms so ESPHome stays responsive). After each payload the radio is powered down for `{intermessage_cooldown}` ms, then given 5 ms for the nRF24 oscillator to settle before the next burst.
 
 
 ```yaml
@@ -93,7 +93,7 @@ Each time you send a code, Directolor will generate `{payload_send_attempts}` pa
 
 
 To connect the ESP32 to the NRF24L01+ connect:
-<br>(Some have recommended a 10uF cap across ground and 3.3V - I haven't needed the cap.)
+<br>Solder a 10 µF electrolytic (or 10 µF + 0.1 µF ceramic) directly across the module's VCC and GND pins, as close to the chip as possible. nRF24 modules — especially PA+LNA boards at HIGH/MAX — sag the 3.3 V rail during transmit and drop packets without that capacitor.
 <table>
   <tr>
     <th>ESP32 pin</th>

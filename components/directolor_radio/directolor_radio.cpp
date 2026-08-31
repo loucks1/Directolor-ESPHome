@@ -255,7 +255,9 @@ namespace esphome
          * Restores dense RF bursts (up to TX_BURST_BUDGET_MS of write_fast calls per
          * loop iteration) while still yielding so ESPHome can service WiFi/API.
          * Cooldown applies between distinct queued payloads, not between individual
-         * packet repeats within a payload.
+         * packet repeats within a payload. The radio is powered down for that
+         * cooldown so the 3.3 V rail can recover, then given Tpd2stby after
+         * power-up before the next burst.
          */
         void DirectolorRadio::send_code()
         {
@@ -282,6 +284,7 @@ namespace esphome
                          format_hex_pretty(this->current_sending_payload_.payload, MAX_NRF_PAYLOAD_SIZE).c_str());
 
                 this->radio_->power_up();
+                this->radio_power_up_ms_ = now;
                 this->radio_->stop_listening(); // put radio in TX mode
                 this->radio_->set_address_width(3);
                 this->radio_->open_writing_pipe(0x060406);
@@ -292,6 +295,10 @@ namespace esphome
                     this->radio_->dump_config();
                 }
             }
+
+            // Oscillator must settle after leaving power-down before CE goes high
+            if (now - this->radio_power_up_ms_ < TX_POWER_UP_SETTLE_MS)
+                return;
 
             // Dense burst: write as many packets as possible within the budget, then
             // yield so ESPHome can service WiFi/API. Matches pre-nonblocking density.
@@ -309,7 +316,14 @@ namespace esphome
                     this->last_payload_finish_ms_ = millis();
                     ESP_LOGV(TAG, "send code complete");
                     if (this->queue_.isEmpty())
+                    {
                         this->enterRemoteCaptureMode();
+                    }
+                    else
+                    {
+                        // Let the 3.3 V rail recover before the next distinct payload
+                        this->radio_->power_down();
+                    }
                     return;
                 }
 

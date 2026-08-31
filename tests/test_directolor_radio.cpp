@@ -122,13 +122,19 @@ void test_non_blocking_dense_send() {
     EXPECT_TRUE(radio.sendPayload(test_payload));
     EXPECT_EQ(radio.pending_payload_count(), 1);
 
-    // One loop with plenty of time budget should blast many packets densly
     current_millis = 0;
+    radio.loop(); // dequeue + power_up; wait Tpd2stby before TX
+    EXPECT_EQ(mock_nrf.write_count_, 0);
+    EXPECT_TRUE(mock_nrf.powered_);
+
+    current_millis = TX_POWER_UP_SETTLE_MS;
     radio.loop();
-    // With TX_BURST_BUDGET_MS=25 and millis frozen at 0, the entire payload
+    // With TX_BURST_BUDGET_MS=25 and millis frozen, the entire payload
     // can complete in one burst (budget never expires when time is frozen).
     EXPECT_EQ(mock_nrf.write_count_, 30);
     EXPECT_EQ(radio.pending_payload_count(), 0);
+    EXPECT_TRUE(!mock_nrf.powered_);
+    EXPECT_EQ(mock_nrf.power_down_count_, 1);
 
     // Second payload: verify multi-payload queue drain with cooldown=0
     mock_nrf.write_count_ = 0;
@@ -136,24 +142,76 @@ void test_non_blocking_dense_send() {
     EXPECT_TRUE(radio.sendPayload(test_payload));
     EXPECT_EQ(radio.pending_payload_count(), 2);
 
+    radio.loop(); // power_up first remaining payload
+    EXPECT_EQ(mock_nrf.write_count_, 0);
+    current_millis += TX_POWER_UP_SETTLE_MS;
     radio.loop(); // finishes first
     EXPECT_EQ(mock_nrf.write_count_, 30);
     EXPECT_EQ(radio.pending_payload_count(), 1);
+    EXPECT_TRUE(!mock_nrf.powered_);
 
     current_millis += 1;
-    radio.loop(); // starts and finishes second (cooldown 0, last_finish same ms may block)
-    // If finish_ms == now, cooldown of 0 should still allow (now - finish < 0 is false)
-    // Actually: last_payload_finish_ms_ is set, cooldown is 0, (now - finish < 0) is false.
-    // So second payload should start same loop... wait, first loop only processes one payload
-    // because after finish it returns. Second loop should pick up remaining.
-    if (radio.pending_payload_count() == 1 || mock_nrf.write_count_ == 30) {
-        current_millis += 1;
-        radio.loop();
-    }
+    radio.loop(); // power_up second (cooldown 0: now - finish < 0 is false)
+    EXPECT_EQ(mock_nrf.write_count_, 30);
+    current_millis += TX_POWER_UP_SETTLE_MS;
+    radio.loop();
     EXPECT_EQ(mock_nrf.write_count_, 60);
     EXPECT_EQ(radio.pending_payload_count(), 0);
+    EXPECT_TRUE(!mock_nrf.powered_);
 
     std::cout << "test_non_blocking_dense_send passed" << std::endl;
+}
+
+void test_power_down_and_cooldown_between_payloads() {
+    DirectolorRadio radio;
+    NRF24Component mock_nrf;
+    radio.set_nrf24(&mock_nrf);
+    radio.set_message_send_repeats(10);
+    radio.set_cooldown(100);
+    radio.set_listening(false);
+    radio.setup();
+
+    uint8_t payload[32] = {0};
+    EXPECT_TRUE(radio.sendPayload(payload));
+    EXPECT_TRUE(radio.sendPayload(payload));
+
+    current_millis = 1000;
+    radio.loop(); // power_up
+    EXPECT_EQ(mock_nrf.write_count_, 0);
+    EXPECT_TRUE(mock_nrf.powered_);
+
+    current_millis += TX_POWER_UP_SETTLE_MS;
+    radio.loop(); // complete first payload and power down
+    EXPECT_EQ(mock_nrf.write_count_, 10);
+    EXPECT_EQ(radio.pending_payload_count(), 1);
+    EXPECT_TRUE(!mock_nrf.powered_);
+    EXPECT_EQ(mock_nrf.power_down_count_, 1);
+
+    // Still inside 100 ms cooldown: must stay powered down and not TX
+    current_millis += 99;
+    radio.loop();
+    EXPECT_EQ(mock_nrf.write_count_, 10);
+    EXPECT_TRUE(!mock_nrf.powered_);
+    EXPECT_EQ(radio.pending_payload_count(), 1);
+
+    current_millis += 1; // cooldown elapsed
+    radio.loop(); // power_up second payload
+    EXPECT_EQ(mock_nrf.write_count_, 10);
+    EXPECT_TRUE(mock_nrf.powered_);
+    EXPECT_EQ(mock_nrf.power_up_count_, 2);
+
+    current_millis += TX_POWER_UP_SETTLE_MS - 1;
+    radio.loop(); // still settling
+    EXPECT_EQ(mock_nrf.write_count_, 10);
+
+    current_millis += 1;
+    radio.loop();
+    EXPECT_EQ(mock_nrf.write_count_, 20);
+    EXPECT_EQ(radio.pending_payload_count(), 0);
+    EXPECT_TRUE(!mock_nrf.powered_);
+    EXPECT_EQ(mock_nrf.power_down_count_, 2);
+
+    std::cout << "test_power_down_and_cooldown_between_payloads passed" << std::endl;
 }
 
 void test_queue_full_drop() {
@@ -194,8 +252,12 @@ void test_burst_yields_when_time_advances() {
     //
     // Sanity: full completion with frozen time still drains queue.
     current_millis = 1000;
+    radio.loop(); // power_up; wait settle
+    EXPECT_EQ(mock_nrf.write_count_, 0);
+    current_millis += TX_POWER_UP_SETTLE_MS;
     radio.loop();
     EXPECT_EQ(mock_nrf.write_count_, 100);
+    EXPECT_TRUE(!mock_nrf.powered_);
 
     std::cout << "test_burst_yields_when_time_advances passed" << std::endl;
 }
@@ -204,6 +266,7 @@ int main() {
     test_payload_queue();
     test_payload_matching();
     test_non_blocking_dense_send();
+    test_power_down_and_cooldown_between_payloads();
     test_queue_full_drop();
     test_burst_yields_when_time_advances();
 

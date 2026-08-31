@@ -8,7 +8,7 @@ substitutions:
   ce_pin: GPIO22
   payload_send_attempts: 3
   payload_send_repeats: 513
-  intermessage_cooldown: 30
+  intermessage_cooldown: 100
   pa_level: MAX
   # NRF24 data rate (component accepts values like 1MHz / 2MHz)
   data_rate: 2MHz
