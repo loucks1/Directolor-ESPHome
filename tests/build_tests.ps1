@@ -13,7 +13,9 @@ if (Get-Command $Compiler -ErrorAction SilentlyContinue) {
     $SourceFiles = @(
         "test_directolor_radio.cpp",
         "..\components\directolor_radio\directolor_radio.cpp",
-        "..\components\directolor_radio\payload_queue.cpp"
+        "..\components\directolor_radio\directolor_packet.cpp",
+        "..\components\directolor_radio\payload_queue.cpp",
+        "..\components\directolor_cover\directolor_cover.cpp"
     )
     
     $IncludeArgs = "-I.\mocks"

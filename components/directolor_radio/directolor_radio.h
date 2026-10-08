@@ -49,7 +49,35 @@ namespace esphome
              * @return false if the queue is full and the payload was dropped
              */
             bool sendPayload(const uint8_t *payload);
+
+            /**
+             * @brief Queue a shade command.
+             *
+             * Mergeable actions (open/close/stop/tilt/to-favorite) for the same
+             * 4-byte radio are combined into one frame of up to REMOTE_CHANNELS
+             * channels. A matching in-flight or queued command is updated in place.
+             * A 7th distinct channel is kept as a following request. Duplicate
+             * channels are not added twice. Other actions are queued as their own
+             * requests and do not disturb unrelated entries.
+             *
+             * @param code_attempts Distinct random/CRC payloads to transmit for this command
+             * @return false if a new queue slot was required and the queue was full
+             */
+            bool submit_command(const uint8_t radio_code[4], uint8_t channel, BlindAction action, uint8_t code_attempts);
+
             uint8_t get_code_attempts() const { return this->code_attempts_; }
+
+            /** @brief Copy a queued request. Index 0 is the next one to transmit. */
+            bool copy_pending(uint8_t index, PayloadEntry &out) const { return this->queue_.copy_at(index, out); }
+            /** @brief Copy the command currently being repeated, if one is active. */
+            bool copy_inflight(PayloadEntry &out) const
+            {
+                if (!this->current_active_)
+                    return false;
+                out = this->current_sending_payload_;
+                return true;
+            }
+            void set_command_random(uint8_t value) { this->command_random_ = value; }
 
             /** @brief Enables or disables RX listening mode */
             void set_listening(bool listening) { this->listening_ = listening; }
@@ -74,8 +102,16 @@ namespace esphome
             void process_incoming_packet(const uint8_t *data, uint8_t len);
             void enterRemoteCaptureMode();
             void send_code();
+            bool enqueue_logical_(const uint8_t radio_code[4], const uint8_t *channels, uint8_t channel_count,
+                                  BlindAction action, uint8_t code_attempts, bool mergeable);
+            bool merge_motion_(const uint8_t radio_code[4], uint8_t channel, BlindAction action, uint8_t code_attempts);
+            bool prepare_current_payload_();
+            void restart_inflight_(PayloadEntry &entry, uint8_t code_attempts);
 
             bool listening_{true};
+            bool continue_current_{false};
+            bool current_active_{false};
+            uint8_t command_random_{0};
 
             RemoteLearnState CaptureState_{REMOTE_STATE_NOT_STARTED};
 

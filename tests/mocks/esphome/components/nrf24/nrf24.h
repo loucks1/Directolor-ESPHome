@@ -1,6 +1,10 @@
 #pragma once
 #include <cstdint>
+#include <cstring>
 #include <functional>
+
+// Defined by the unit-test harness. write_fast can advance it so a burst yields.
+extern unsigned long current_millis;
 
 namespace esphome {
 namespace nrf24 {
@@ -20,7 +24,15 @@ namespace nrf24 {
         void open_writing_pipe(uint64_t) { writing_ = true; }
         void dump_config() {}
         void tx_standby() { standby_count_++; }
-        void write_fast(const uint8_t*, uint8_t, bool) { write_count_++; }
+        void write_fast(const uint8_t *data, uint8_t len, bool)
+        {
+            write_count_++;
+            last_written_len_ = len > sizeof(last_written_) ? static_cast<uint8_t>(sizeof(last_written_)) : len;
+            if (data != nullptr && last_written_len_ > 0)
+                std::memcpy(last_written_, data, last_written_len_);
+            if (advance_millis_on_write_ > 0)
+                current_millis += static_cast<unsigned long>(advance_millis_on_write_);
+        }
         uint8_t get_payload_size() { return 32; }
 
         void trigger_incoming(const uint8_t* data, uint8_t len) {
@@ -35,6 +47,9 @@ namespace nrf24 {
         bool powered_ = true;
         bool writing_ = false;
         uint8_t address_width_ = 5;
+        uint8_t last_written_[32]{};
+        uint8_t last_written_len_{0};
+        int advance_millis_on_write_{0};
 
     private:
         std::function<void(const uint8_t*, uint8_t)> callback_;

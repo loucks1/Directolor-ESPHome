@@ -1,7 +1,9 @@
 #include "directolor_radio.h"
+#include "directolor_packet.h"
 
 #include <esphome/core/log.h>
 #include "esphome.h"
+#include "esp_random.h"
 #include <string>
 #include <cstring>
 
@@ -18,6 +20,9 @@ namespace esphome
         void DirectolorRadio::setup()
         {
             this->current_sending_payload_.send_attempts = 0;
+            this->current_active_ = false;
+            this->continue_current_ = false;
+            this->command_random_ = static_cast<uint8_t>(esp_random() % 256);
 
             this->radio_->add_on_data_callback([this](const uint8_t *data, uint8_t len)
                                                { this->process_incoming_packet(data, len); });
@@ -249,6 +254,295 @@ namespace esphome
             return true;
         }
 
+        bool DirectolorRadio::enqueue_logical_(const uint8_t radio_code[4], const uint8_t *channels, uint8_t channel_count,
+                                               BlindAction action, uint8_t code_attempts, bool mergeable)
+        {
+            if (channel_count > REMOTE_CHANNELS)
+                channel_count = REMOTE_CHANNELS;
+
+            PayloadEntry entry{};
+            entry.logical = true;
+            entry.mergeable = mergeable;
+            entry.payload_ready = false;
+            entry.send_attempts = 0;
+            entry.action = action;
+            entry.channel_count = channel_count;
+            entry.code_attempts_left = code_attempts == 0 ? 1 : code_attempts;
+            std::memcpy(entry.radio_code, radio_code, 4);
+            if (channels != nullptr && channel_count > 0)
+                std::memcpy(entry.channels, channels, channel_count);
+
+            if (!this->queue_.enqueue_entry(entry))
+            {
+                ESP_LOGW(TAG, "Payload queue full (capacity=%u); dropping command",
+                         static_cast<unsigned>(PayloadQueue::capacity()));
+                return false;
+            }
+            return true;
+        }
+
+        bool DirectolorRadio::prepare_current_payload_()
+        {
+            PayloadEntry &entry = this->current_sending_payload_;
+            if (!entry.logical)
+                return entry.send_attempts > 0;
+
+            const int built = build_on_air_payload(entry.payload, entry.radio_code, entry.channels, entry.channel_count,
+                                                   entry.action, this->command_random_);
+            if (built <= 0)
+            {
+                ESP_LOGE(TAG, "Failed to build radio payload");
+                entry.send_attempts = 0;
+                entry.payload_ready = false;
+                return false;
+            }
+            entry.payload_ready = true;
+            entry.send_attempts = this->message_send_repeats_;
+            return true;
+        }
+
+        void DirectolorRadio::restart_inflight_(PayloadEntry &entry, uint8_t code_attempts)
+        {
+            entry.code_attempts_left = code_attempts == 0 ? 1 : code_attempts;
+            entry.payload_ready = false;
+            // A burst is already running (or waiting out oscillator settle). Rebuild now
+            // and restart the repeat count so the combined frame is what goes on the air.
+            if (entry.send_attempts > 0)
+            {
+                const int built = build_on_air_payload(entry.payload, entry.radio_code, entry.channels, entry.channel_count,
+                                                       entry.action, this->command_random_);
+                if (built <= 0)
+                {
+                    entry.send_attempts = 0;
+                    this->current_active_ = false;
+                    this->continue_current_ = false;
+                    return;
+                }
+                entry.payload_ready = true;
+                entry.send_attempts = this->message_send_repeats_;
+                return;
+            }
+
+            // Between distinct code attempts the radio is powered down for cooldown.
+            // Keep the command current; the next acquire builds the updated frame.
+            this->continue_current_ = true;
+            this->current_active_ = true;
+        }
+
+        namespace
+        {
+            bool insert_channel_sorted(uint8_t *channels, uint8_t &count, uint8_t channel, uint8_t cap)
+            {
+                for (uint8_t i = 0; i < count; i++)
+                {
+                    if (channels[i] == channel)
+                        return false;
+                    if (channels[i] > channel)
+                    {
+                        if (count >= cap)
+                            return false;
+                        for (uint8_t j = count; j > i; j--)
+                            channels[j] = channels[j - 1];
+                        channels[i] = channel;
+                        count++;
+                        return true;
+                    }
+                }
+                if (count >= cap)
+                    return false;
+                channels[count++] = channel;
+                return true;
+            }
+
+            bool same_channels(const PayloadEntry &entry, const uint8_t *channels, uint8_t count)
+            {
+                if (entry.channel_count != count)
+                    return false;
+                return count == 0 || std::memcmp(entry.channels, channels, count) == 0;
+            }
+
+            bool entry_has_channel(const PayloadEntry &entry, uint8_t channel)
+            {
+                for (uint8_t i = 0; i < entry.channel_count; i++)
+                {
+                    if (entry.channels[i] == channel)
+                        return true;
+                }
+                return false;
+            }
+        } // namespace
+
+        bool DirectolorRadio::merge_motion_(const uint8_t radio_code[4], uint8_t channel, BlindAction action,
+                                            uint8_t code_attempts)
+        {
+            if (code_attempts == 0)
+                code_attempts = 1;
+
+            struct Slot
+            {
+                bool in_flight;
+                uint8_t queue_index;
+            };
+
+            Slot slots[PAYLOAD_QUEUE_SIZE + 1];
+            uint8_t slot_count = 0;
+
+            auto matches = [&](const PayloadEntry &entry) {
+                return entry.logical && entry.mergeable && entry.action == action &&
+                       std::memcmp(entry.radio_code, radio_code, 4) == 0;
+            };
+            auto load_slot = [&](const Slot &slot, PayloadEntry &out) {
+                if (slot.in_flight)
+                {
+                    out = this->current_sending_payload_;
+                    return this->current_active_;
+                }
+                return this->queue_.copy_at(slot.queue_index, out);
+            };
+            auto store_slot = [&](const Slot &slot, const PayloadEntry &entry) {
+                if (slot.in_flight)
+                    this->current_sending_payload_ = entry;
+                else
+                    this->queue_.update_at(slot.queue_index, entry);
+            };
+
+            if (this->current_active_ && matches(this->current_sending_payload_))
+            {
+                slots[slot_count].in_flight = true;
+                slots[slot_count].queue_index = 0;
+                slot_count++;
+            }
+            for (uint8_t i = 0; i < this->queue_.size(); i++)
+            {
+                PayloadEntry queued{};
+                if (!this->queue_.copy_at(i, queued) || !matches(queued))
+                    continue;
+                slots[slot_count].in_flight = false;
+                slots[slot_count].queue_index = i;
+                slot_count++;
+            }
+
+            uint8_t all[PAYLOAD_QUEUE_SIZE * REMOTE_CHANNELS + 1];
+            uint8_t all_count = 0;
+            for (uint8_t s = 0; s < slot_count; s++)
+            {
+                PayloadEntry entry{};
+                if (!load_slot(slots[s], entry))
+                    continue;
+                for (uint8_t c = 0; c < entry.channel_count; c++)
+                    insert_channel_sorted(all, all_count, entry.channels[c], sizeof(all));
+            }
+
+            const bool added = insert_channel_sorted(all, all_count, channel, sizeof(all));
+            if (!added)
+            {
+                // Same channel is already in a matching request. Restart that request so
+                // a repeated press is still transmitted, without duplicating the channel.
+                for (uint8_t s = 0; s < slot_count; s++)
+                {
+                    PayloadEntry entry{};
+                    if (!load_slot(slots[s], entry) || !entry_has_channel(entry, channel))
+                        continue;
+                    entry.code_attempts_left = code_attempts;
+                    entry.payload_ready = false;
+                    if (slots[s].in_flight)
+                        this->restart_inflight_(entry, code_attempts);
+                    store_slot(slots[s], entry);
+                    return true;
+                }
+                return true;
+            }
+
+            const uint8_t packets_needed =
+                static_cast<uint8_t>((all_count + REMOTE_CHANNELS - 1) / REMOTE_CHANNELS);
+            const uint8_t new_slots = packets_needed > slot_count ? static_cast<uint8_t>(packets_needed - slot_count) : 0;
+            if (static_cast<size_t>(this->queue_.size()) + new_slots > PayloadQueue::capacity())
+            {
+                ESP_LOGW(TAG, "Payload queue full (capacity=%u); dropping command",
+                         static_cast<unsigned>(PayloadQueue::capacity()));
+                return false;
+            }
+
+            for (uint8_t p = 0; p < packets_needed && p < slot_count; p++)
+            {
+                const uint8_t begin = static_cast<uint8_t>(p * REMOTE_CHANNELS);
+                const uint8_t count = static_cast<uint8_t>(
+                    (all_count - begin) > REMOTE_CHANNELS ? REMOTE_CHANNELS : (all_count - begin));
+                PayloadEntry entry{};
+                if (!load_slot(slots[p], entry))
+                    continue;
+                if (same_channels(entry, all + begin, count))
+                    continue;
+
+                std::memcpy(entry.channels, all + begin, count);
+                if (count < REMOTE_CHANNELS)
+                    std::memset(entry.channels + count, 0, REMOTE_CHANNELS - count);
+                entry.channel_count = count;
+                entry.payload_ready = false;
+                entry.code_attempts_left = code_attempts;
+                if (slots[p].in_flight)
+                    this->restart_inflight_(entry, code_attempts);
+                store_slot(slots[p], entry);
+            }
+
+            if (slot_count > packets_needed)
+            {
+                uint8_t remove_idx[PAYLOAD_QUEUE_SIZE];
+                uint8_t remove_n = 0;
+                for (uint8_t s = packets_needed; s < slot_count; s++)
+                {
+                    if (!slots[s].in_flight)
+                        remove_idx[remove_n++] = slots[s].queue_index;
+                }
+                for (uint8_t i = 0; i < remove_n; i++)
+                {
+                    for (uint8_t j = static_cast<uint8_t>(i + 1); j < remove_n; j++)
+                    {
+                        if (remove_idx[j] > remove_idx[i])
+                        {
+                            const uint8_t tmp = remove_idx[i];
+                            remove_idx[i] = remove_idx[j];
+                            remove_idx[j] = tmp;
+                        }
+                    }
+                }
+                for (uint8_t i = 0; i < remove_n; i++)
+                    this->queue_.remove_at(remove_idx[i]);
+            }
+
+            for (uint8_t p = slot_count; p < packets_needed; p++)
+            {
+                const uint8_t begin = static_cast<uint8_t>(p * REMOTE_CHANNELS);
+                const uint8_t count = static_cast<uint8_t>(
+                    (all_count - begin) > REMOTE_CHANNELS ? REMOTE_CHANNELS : (all_count - begin));
+                if (!this->enqueue_logical_(radio_code, all + begin, count, action, code_attempts, true))
+                    return false;
+            }
+
+            ESP_LOGD(TAG, "Combined %s into %u channel(s) across %u packet(s)",
+                     this->blind_action_to_string(action), static_cast<unsigned>(all_count),
+                     static_cast<unsigned>(packets_needed));
+            return true;
+        }
+
+        bool DirectolorRadio::submit_command(const uint8_t radio_code[4], uint8_t channel, BlindAction action,
+                                             uint8_t code_attempts)
+        {
+            if (radio_code == nullptr)
+                return false;
+            if (code_attempts == 0)
+                code_attempts = 1;
+
+            if (!action_is_mergeable(action))
+            {
+                uint8_t channels[1] = {channel};
+                const uint8_t count =
+                    (action == directolor_join || action == directolor_remove) ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0);
+                return this->enqueue_logical_(radio_code, channels, count, action, code_attempts, false);
+            }
+            return this->merge_motion_(radio_code, channel, action, code_attempts);
+        }
+
         /**
          * @brief Non-blocking state machine for handling command transmissions.
          *
@@ -276,8 +570,28 @@ namespace esphome
                     return;
                 }
 
-                if (!this->queue_.dequeue(this->current_sending_payload_))
-                    return;
+                if (this->continue_current_ && this->current_active_)
+                {
+                    if (!this->prepare_current_payload_())
+                    {
+                        this->current_active_ = false;
+                        this->continue_current_ = false;
+                        return;
+                    }
+                }
+                else
+                {
+                    if (!this->queue_.dequeue(this->current_sending_payload_))
+                        return;
+
+                    this->current_active_ = true;
+                    this->continue_current_ = false;
+                    if (this->current_sending_payload_.logical && !this->prepare_current_payload_())
+                    {
+                        this->current_active_ = false;
+                        return;
+                    }
+                }
 
                 ESP_LOGV(TAG, "Processing - send_attempts: %d: %s",
                          this->current_sending_payload_.send_attempts,
@@ -315,6 +629,26 @@ namespace esphome
                     this->radio_->tx_standby();
                     this->last_payload_finish_ms_ = millis();
                     ESP_LOGV(TAG, "send code complete");
+
+                    if (this->current_sending_payload_.logical &&
+                        this->current_sending_payload_.code_attempts_left > 0)
+                    {
+                        this->current_sending_payload_.code_attempts_left--;
+                    }
+                    if (this->current_sending_payload_.logical &&
+                        this->current_sending_payload_.code_attempts_left > 0)
+                    {
+                        // Another distinct random/CRC of the same command after cooldown.
+                        this->current_sending_payload_.payload_ready = false;
+                        this->continue_current_ = true;
+                        this->current_active_ = true;
+                        this->radio_->power_down();
+                        return;
+                    }
+
+                    this->continue_current_ = false;
+                    this->current_active_ = false;
+                    this->current_sending_payload_.logical = false;
                     if (this->queue_.isEmpty())
                     {
                         this->enterRemoteCaptureMode();
