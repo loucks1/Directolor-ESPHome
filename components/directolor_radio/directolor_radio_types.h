@@ -1,4 +1,7 @@
 #pragma once
+#ifndef DIRECTOLOR_RADIO_TYPES_H
+#define DIRECTOLOR_RADIO_TYPES_H
+
 #include <cstdint>
 #include <cstddef>
 
@@ -23,9 +26,19 @@ namespace esphome
 
         // Centralized Constants
         static constexpr size_t MAX_NRF_PAYLOAD_SIZE = 32;
+        /// Max channel bytes in one motion packet. A 7th channel is a separate request.
         static constexpr uint8_t REMOTE_CHANNELS = 6;
         static constexpr uint32_t DEFAULT_TILT_DURATION_MS = 5000;
-        // static constexpr size_t MAX_HEX_LOG_BUFFER_SIZE = MAX_NRF_PAYLOAD_SIZE * 3;
+        /// Wall-time budget for dense TX bursts per loop() call (ms).
+        static constexpr uint32_t TX_BURST_BUDGET_MS = 25;
+        /// nRF24 Tpd2stby: oscillator must settle after power-up before TX (ms).
+        static constexpr uint32_t TX_POWER_UP_SETTLE_MS = 5;
+        /// Ignore duplicate RX of the same action within this window (ms).
+        static constexpr uint32_t RX_DEBOUNCE_MS = 500;
+        /// Max queued distinct code payloads (each cover multiplies by code_attempts).
+        static constexpr size_t PAYLOAD_QUEUE_SIZE = 16;
 
     } // namespace directolor_radio
 } // namespace esphome
+
+#endif // DIRECTOLOR_RADIO_TYPES_H

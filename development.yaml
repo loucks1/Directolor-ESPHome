@@ -28,7 +28,7 @@ ota:
 packages:
   directolor:
     url:  https://github.com/loucks1/Directolor-ESPHome
-    ref: feature/nrf24-espidf-integration
+    ref: feature/nrf24-optimizations
     refresh: 1s
     files:
       - path: plumbing.yaml

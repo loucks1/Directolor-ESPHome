@@ -4,6 +4,12 @@
 /.esphome/
 /secrets.yaml
 /__pycache__/
+**/__pycache__/
 components/directolor_cover/__pycache__/__init__.cpython-312.pyc
 components/directolor_cover/__pycache__/cover.cpython-312.pyc
 components/nrf24/__pycache__/__init__.cpython-312.pyc
+
+# Unit test build artifacts
+tests/test_runner
+tests/test_runner.exe
+tests/mocks/esphome/components/directolor_radio/
