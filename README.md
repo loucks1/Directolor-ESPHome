@@ -63,7 +63,7 @@ Each time you send a code, Directolor will generate `{payload_send_attempts}` pa
 
   directolor:
     url:  https://github.com/loucks1/Directolor-ESPHome
-    ref: feature/nrf24-optimizations
+    ref: feature/nrf24-espidf-integration
     refresh: 1s
     files:
       - path: plumbing.yaml
