@@ -143,6 +143,12 @@ void test_non_blocking_dense_send() {
     radio.loop(); // dequeue + power_up; wait Tpd2stby before TX
     EXPECT_EQ(mock_nrf.write_count_, 0);
     EXPECT_TRUE(mock_nrf.powered_);
+    // TX pipe must stay the pre-nrf24_espidf-PR#3 register image: 00 00 06 04 06.
+    static const uint8_t expected_tx_addr[5] = {0x00, 0x00, 0x06, 0x04, 0x06};
+    EXPECT_TRUE(mock_nrf.writing_);
+    EXPECT_TRUE(mock_nrf.tx_addr_set_);
+    EXPECT_EQ(mock_nrf.address_width_, 3);
+    EXPECT_TRUE(std::memcmp(mock_nrf.last_tx_addr_, expected_tx_addr, sizeof(expected_tx_addr)) == 0);
 
     current_millis = TX_POWER_UP_SETTLE_MS;
     radio.loop();

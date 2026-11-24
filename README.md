@@ -57,6 +57,8 @@ Below are substitutions that you can use to change pins and default behavior.  U
 
 Each time you send a code, Directolor will generate `{payload_send_attempts}` payloads (separate CRCs). Each payload is transmitted `{payload_send_repeats}` times in dense bursts (yielding every ~25 ms so ESPHome stays responsive). After each payload the radio is powered down for `{intermessage_cooldown}` ms, then given 5 ms for the nRF24 oscillator to settle before the next burst.
 
+The blind transmit address is the five register bytes `00 00 06 04 06`, passed to `open_writing_pipe(const uint8_t*)`. That is the byte order `open_writing_pipe(0x060406)` wrote before [nrf24_espidf PR #3](https://github.com/loucks1/nrf24_espidf/pull/3) switched `uint64_t` addresses to LSB-first. The byte-array form keeps the on-air address the same on either library version.
+
 
 ```yaml
 # example configuration:
