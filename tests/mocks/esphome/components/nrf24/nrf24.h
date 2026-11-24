@@ -22,6 +22,15 @@ namespace nrf24 {
         void open_reading_pipe(uint8_t, uint64_t) {}
         void open_reading_pipe(uint8_t, const uint8_t*) {}
         void open_writing_pipe(uint64_t) { writing_ = true; }
+        void open_writing_pipe(const uint8_t *address)
+        {
+            writing_ = true;
+            if (address != nullptr)
+            {
+                std::memcpy(last_tx_addr_, address, sizeof(last_tx_addr_));
+                tx_addr_set_ = true;
+            }
+        }
         void dump_config() {}
         void tx_standby() { standby_count_++; }
         void write_fast(const uint8_t *data, uint8_t len, bool)
@@ -46,6 +55,8 @@ namespace nrf24 {
         bool listening_ = false;
         bool powered_ = true;
         bool writing_ = false;
+        bool tx_addr_set_ = false;
+        uint8_t last_tx_addr_[5]{};
         uint8_t address_width_ = 5;
         uint8_t last_written_[32]{};
         uint8_t last_written_len_{0};

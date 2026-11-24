@@ -601,7 +601,8 @@ namespace esphome
                 this->radio_power_up_ms_ = now;
                 this->radio_->stop_listening(); // put radio in TX mode
                 this->radio_->set_address_width(3);
-                this->radio_->open_writing_pipe(0x060406);
+                static const uint8_t DIRECTOLOR_TX_ADDR[5] = {0x00, 0x00, 0x06, 0x04, 0x06};  // exact bytes the pre-PR#3 library wrote for 0x060406; byte-array form is independent of nrf24_espidf's uint64 byte order
+                this->radio_->open_writing_pipe(DIRECTOLOR_TX_ADDR);
 
                 if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE)
                 {
