@@ -18,3 +18,11 @@ inline const char* format_hex_pretty_to(char* buffer, const uint8_t* data, size_
     buffer[0] = 'm'; buffer[1] = 'o'; buffer[2] = 'c'; buffer[3] = 'k'; buffer[4] = '\0';
     return buffer;
 }
+
+// Host stand-in for the non-ESP8266 form in esphome/core/log.h (ESP32 and this
+// test binary). get_log_name() returns const LogString *; LOG_STR_ARG turns
+// that into the const char * a "%s" printf argument expects.
+namespace esphome {
+struct LogString;
+}  // namespace esphome
+#define LOG_STR_ARG(s) (reinterpret_cast<const char *>(s))

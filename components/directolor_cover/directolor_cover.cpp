@@ -1,8 +1,18 @@
 #include "directolor_cover.h"
 #include "esphome/components/directolor_radio/directolor_radio.h"
 #include <esphome/core/log.h>
+#include "esphome/core/version.h"
 #include "esphome.h"
 #include <cmath>
+
+// ESPHome 2026.11 stores entity names in flash. A "%s" log argument has to be
+// LOG_STR_ARG(get_log_name()). Older releases still expose a RAM C string, and
+// each call site keeps the expression it used before (name_ or get_name()).
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2026, 11, 0)
+#define DIRECTOROLOR_LOG_NAME(legacy_name) LOG_STR_ARG(this->get_log_name())
+#else
+#define DIRECTOROLOR_LOG_NAME(legacy_name) legacy_name
+#endif
 
 namespace esphome
 {
@@ -12,7 +22,7 @@ namespace esphome
 
         void DirectolorCover::dump_config()
         {
-            ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", LOG_STR_ARG(this->get_log_name()));
+            ESP_LOGCONFIG(TAG, "Directolor Cover '%s'", DIRECTOROLOR_LOG_NAME(this->name_.c_str()));
             ESP_LOGCONFIG(TAG, "  Radio Code: %s", format_hex_pretty(radio_code_.data(), radio_code_.size()).c_str());
             ESP_LOGCONFIG(TAG, "  Movement Duration: %.2f seconds", this->movement_duration_ms_ / 1000.0f);
             ESP_LOGCONFIG(TAG, "  Tilt Supported: %s", this->tilt_supported_ ? "Yes" : "No");
@@ -31,7 +41,7 @@ namespace esphome
 
         void DirectolorCover::setup()
         {
-            ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", LOG_STR_ARG(this->get_log_name()));
+            ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()));
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)
@@ -53,7 +63,7 @@ namespace esphome
                 }
                 else if (pos == this->position)
                 {
-                    ESP_LOGI(TAG, "Shade '%s' already at requested position.", LOG_STR_ARG(this->get_log_name()));
+                    ESP_LOGI(TAG, "Shade '%s' already at requested position.", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()));
                 }
                 else
                 {
@@ -67,8 +77,8 @@ namespace esphome
                     this->set_timeout("delayed_stop", delay, [this, pos]()
                                       {
                                         this->issue_shade_command(directolor_stop);
-                                        ESP_LOGD(TAG, "Scheduled stop executed for %s", LOG_STR_ARG(this->get_log_name())); });
-                    ESP_LOGD(TAG, "%s scheduled for stop after delay. Position: %.2f, Target: %.2f, Delay: %lu ms", LOG_STR_ARG(this->get_log_name()), this->position, pos, (unsigned long)delay);
+                                        ESP_LOGD(TAG, "Scheduled stop executed for %s", DIRECTOROLOR_LOG_NAME(this->get_name().c_str())); });
+                    ESP_LOGD(TAG, "%s scheduled for stop after delay. Position: %.2f, Target: %.2f, Delay: %lu ms", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()), this->position, pos, (unsigned long)delay);
                 }
 
                 this->position = pos;
@@ -113,8 +123,8 @@ namespace esphome
                     this->set_timeout("delayed_stop", delay, [this]()
                                       {
                                         this->issue_shade_command(directolor_stop);
-                                        ESP_LOGD(TAG, "Tilt scheduled stop executed for %s", LOG_STR_ARG(this->get_log_name())); });
-                    ESP_LOGD(TAG, "%s tilt scheduled for stop after delay. Current: %.2f, Target: %.2f, Delay: %lu ms", LOG_STR_ARG(this->get_log_name()), this->tilt, tilt_val, (unsigned long)delay);
+                                        ESP_LOGD(TAG, "Tilt scheduled stop executed for %s", DIRECTOROLOR_LOG_NAME(this->get_name().c_str())); });
+                    ESP_LOGD(TAG, "%s tilt scheduled for stop after delay. Current: %.2f, Target: %.2f, Delay: %lu ms", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()), this->tilt, tilt_val, (unsigned long)delay);
                 }
                 this->tilt = tilt_val;
                 this->publish_state();
@@ -125,11 +135,11 @@ namespace esphome
         {
             if (this->hub_ == nullptr)
             {
-                ESP_LOGE(TAG, "No radio hub for '%s'", LOG_STR_ARG(this->get_log_name()));
+                ESP_LOGE(TAG, "No radio hub for '%s'", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()));
                 return;
             }
 
-            ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", LOG_STR_ARG(this->get_log_name()), this->hub_->blind_action_to_string(blind_action));
+            ESP_LOGI(TAG, "Issuing shade command for '%s': action=%s", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()), this->hub_->blind_action_to_string(blind_action));
 
             // Join/remove are one-shot and always followed by a duplicate pairing frame.
             // Repeating them can re-trigger programming on the blind, and their frames
@@ -137,9 +147,9 @@ namespace esphome
             if (blind_action == directolor_join || blind_action == directolor_remove)
             {
                 if (!this->hub_->submit_command(this->radio_code_.data(), this->channel_, blind_action, 1))
-                    ESP_LOGW(TAG, "Failed to enqueue command for '%s' (queue full)", LOG_STR_ARG(this->get_log_name()));
+                    ESP_LOGW(TAG, "Failed to enqueue command for '%s' (queue full)", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()));
                 if (!this->hub_->submit_command(this->radio_code_.data(), this->channel_, directolor_duplicate, 1))
-                    ESP_LOGW(TAG, "Failed to enqueue command for '%s' (queue full)", LOG_STR_ARG(this->get_log_name()));
+                    ESP_LOGW(TAG, "Failed to enqueue command for '%s' (queue full)", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()));
                 return;
             }
 
@@ -148,8 +158,10 @@ namespace esphome
             // another transmission.
             const uint8_t attempts = this->hub_->get_code_attempts();
             if (!this->hub_->submit_command(this->radio_code_.data(), this->channel_, blind_action, attempts))
-                ESP_LOGW(TAG, "Failed to enqueue command for '%s' (queue full)", LOG_STR_ARG(this->get_log_name()));
+                ESP_LOGW(TAG, "Failed to enqueue command for '%s' (queue full)", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()));
         }
 
     } // namespace directolor_cover
 } // namespace esphome
+
+#undef DIRECTOROLOR_LOG_NAME

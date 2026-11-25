@@ -1,5 +1,7 @@
 #pragma once
 #include "esphome/core/component.h"
+#include "esphome/core/log.h"
+#include "esphome/core/version.h"
 #include <string>
 
 namespace esphome {
@@ -38,7 +40,18 @@ class Cover {
   virtual CoverTraits get_traits() = 0;
   virtual void control(const CoverCall &call) = 0;
   void publish_state() {}
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2026, 11, 0)
+  // EntityBase::get_name() is deprecated in ESPHome 2026.11.0 and removed in 2027.5.0.
+  [[deprecated("Use get_log_name() instead. Will be removed in ESPHome 2027.5.0")]]
+#endif
   const std::string &get_name() const { return name_; }
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2026, 11, 0)
+  // EntityBase::get_log_name(): pointer for LOG_STR_ARG. On devices this is
+  // name_.progmem_ptr(); the host string is already in RAM.
+  const LogString *get_log_name() const {
+    return reinterpret_cast<const LogString *>(this->name_.c_str());
+  }
+#endif
 
   float position{0};
   float tilt{0};
