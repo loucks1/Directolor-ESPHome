@@ -10,6 +10,8 @@ substitutions:
   disable_program_support: false
   radio_code: [0x06, 0x03, 0x05, 0x12]
   radio_hub_id: my_directolor_radio
+  # RESTORE republishes the last position/tilt and does not move the blind.
+  restore_mode: RESTORE
 
 external_components:
   - source:
@@ -33,6 +35,7 @@ cover:
     movement_duration: ${movement_duration}
     channel: ${channel}
     tilt_supported: ${tilt_supported}
+    restore_mode: ${restore_mode}
 
 button:
   - platform: template

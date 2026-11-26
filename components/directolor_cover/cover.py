@@ -1,7 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import cover
-from esphome.const import CONF_ID
+from esphome.const import CONF_ID, CONF_RESTORE_MODE
 
 # 1. Import the DirectolorRadio namespace and class
 # This assumes your radio component is in a folder named 'directolor_radio'
@@ -11,6 +11,11 @@ DirectolorRadio = directolor_radio_ns.class_("DirectolorRadio", cg.Component)
 # 2. Your cover namespace
 directolor_cover_ns = cg.esphome_ns.namespace("directolor_cover")
 DirectolorCover = directolor_cover_ns.class_("DirectolorCover", cover.Cover, cg.Component)
+DirectolorCoverRestoreMode = directolor_cover_ns.enum("DirectolorCoverRestoreMode")
+RESTORE_MODES = {
+    "NO_RESTORE": DirectolorCoverRestoreMode.DIRECTOLOR_COVER_NO_RESTORE,
+    "RESTORE": DirectolorCoverRestoreMode.DIRECTOLOR_COVER_RESTORE,
+}
 
 # 3. Configuration schema
 CONFIG_SCHEMA = cover.cover_schema(DirectolorCover).extend({
@@ -26,6 +31,7 @@ CONFIG_SCHEMA = cover.cover_schema(DirectolorCover).extend({
     cv.Optional("movement_duration", default="0s"): cv.positive_time_period_seconds,
     cv.Required("channel"): cv.int_range(min=1, max=15),
     cv.Optional("tilt_supported", default=False): cv.boolean,
+    cv.Optional(CONF_RESTORE_MODE, default="RESTORE"): cv.enum(RESTORE_MODES, upper=True),
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
@@ -41,3 +47,4 @@ async def to_code(config):
     cg.add(var.set_movement_duration(config["movement_duration"].total_seconds))
     cg.add(var.set_tilt_supported(config["tilt_supported"]))
     cg.add(var.set_channel(config["channel"]))
+    cg.add(var.set_restore_mode(config[CONF_RESTORE_MODE]))
