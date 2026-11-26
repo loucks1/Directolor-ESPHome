@@ -37,8 +37,11 @@ You can include multiple `- path: directolor_cover.yaml` sections — typically 
 | `channel`                   | Channel number of the blind on your original remote (1–15) |
 | `movement_duration`         | Time it takes for the blind to fully open or close (e.g. `18s`). Omit this if you only want basic open/close (no position control). |
 | `tilt_supported`            | `true` if the blind supports tilt functions |
+| `restore_mode`              | `RESTORE` (default) republishes the last known position and tilt after a reboot. This does not transmit an nRF24 command and does not move the blind. `NO_RESTORE` leaves that saved position unpublished. |
 | `disable_favorite_support`  | Set to `true` to disable "Go to Favorite" and "Set Favorite" buttons in Home Assistant and ESPHome webserver (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3 |
 | `disable_program_support`   | Set to `true` to disable "Duplicate", "Join", and "Remove" buttons in Home Assistant and ESPHome webserver (you can enable them manually via the HA UI) and exclude them from the ESPHome webserver if you are using version 3 |
+
+`restore_mode` uses ESPHome's cover preference. The favorite, duplicate, join, and remove buttons are stateless actions, so they have no position to keep. The "Directolor Radio Listening" switch already restores with `restore_mode: RESTORE_DEFAULT_ON`.
 
 Below are substitutions that you can use to change pins and default behavior.  Use what I have provided unless you have a good reason and know what you're doing.  
 

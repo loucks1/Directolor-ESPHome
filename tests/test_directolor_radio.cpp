@@ -9,6 +9,7 @@
 #include "../../components/directolor_radio/directolor_radio.h"
 #include "../../components/directolor_radio/directolor_packet.h"
 #include "../../components/directolor_radio/payload_queue.h"
+#include "../../components/directolor_cover/directolor_cover.h"
 
 // Mock millis global
 unsigned long current_millis = 0;
@@ -576,6 +577,61 @@ void test_inflight_merge() {
     std::cout << "test_inflight_merge passed" << std::endl;
 }
 
+void test_cover_restore_publishes_without_rf() {
+    using esphome::directolor_cover::DIRECTOLOR_COVER_NO_RESTORE;
+    using esphome::directolor_cover::DirectolorCover;
+    using esphome::cover::Cover;
+    using esphome::cover::CoverRestoreState;
+
+    NRF24Component mock_nrf;
+    DirectolorRadio radio;
+    radio.set_nrf24(&mock_nrf);
+    radio.set_listening(false);
+
+    DirectolorCover shade;
+    shade.set_radio_hub(&radio);
+    shade.position = 0.9f;
+    shade.tilt = 0.8f;
+
+    CoverRestoreState saved{};
+    saved.position = 0.25f;
+    saved.tilt = 0.5f;
+
+    // Default mode is RESTORE. apply() publishes the saved position and must
+    // not enqueue or transmit a shade command.
+    Cover::clear_test_restore();
+    Cover::set_test_restore(saved);
+    const int writes_before = mock_nrf.write_count_;
+    const int power_up_before = mock_nrf.power_up_count_;
+    shade.setup();
+
+    EXPECT_EQ(mock_nrf.write_count_, writes_before);
+    EXPECT_EQ(mock_nrf.power_up_count_, power_up_before);
+    EXPECT_EQ(radio.pending_payload_count(), 0);
+    EXPECT_TRUE(shade.position == 0.25f);
+    EXPECT_TRUE(shade.tilt == 0.5f);
+    EXPECT_EQ(shade.publish_count_, 1);
+
+    // NO_RESTORE still reads the preference (so later commands can save) but
+    // does not publish it and still does not touch the radio.
+    shade.position = 0.9f;
+    shade.tilt = 0.8f;
+    shade.set_restore_mode(DIRECTOLOR_COVER_NO_RESTORE);
+    Cover::set_test_restore(saved);
+    const int publishes_before = shade.publish_count_;
+    shade.setup();
+
+    EXPECT_EQ(mock_nrf.write_count_, writes_before);
+    EXPECT_EQ(mock_nrf.power_up_count_, power_up_before);
+    EXPECT_EQ(radio.pending_payload_count(), 0);
+    EXPECT_TRUE(shade.position == 0.9f);
+    EXPECT_TRUE(shade.tilt == 0.8f);
+    EXPECT_EQ(shade.publish_count_, publishes_before);
+    Cover::clear_test_restore();
+
+    std::cout << "test_cover_restore_publishes_without_rf passed" << std::endl;
+}
+
 int main() {
     test_payload_queue();
     test_payload_matching();
@@ -587,6 +643,7 @@ int main() {
     test_queue_merge();
     test_queue_merge_channel_cap();
     test_inflight_merge();
+    test_cover_restore_publishes_without_rf();
 
     std::cout << "Ran " << tests_run << " assertions, " << tests_failed << " failed." << std::endl;
     if (tests_failed != 0) {

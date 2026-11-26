@@ -27,6 +27,8 @@ namespace esphome
             ESP_LOGCONFIG(TAG, "  Movement Duration: %.2f seconds", this->movement_duration_ms_ / 1000.0f);
             ESP_LOGCONFIG(TAG, "  Tilt Supported: %s", this->tilt_supported_ ? "Yes" : "No");
             ESP_LOGCONFIG(TAG, "  Channel: %d", this->channel_);
+            ESP_LOGCONFIG(TAG, "  Restore Mode: %s",
+                          this->restore_mode_ == DIRECTOLOR_COVER_RESTORE ? "RESTORE" : "NO_RESTORE");
         }
 
         cover::CoverTraits DirectolorCover::get_traits()
@@ -42,6 +44,17 @@ namespace esphome
         void DirectolorCover::setup()
         {
             ESP_LOGCONFIG(TAG, "Setting up Directolor Cover '%s'", DIRECTOROLOR_LOG_NAME(this->get_name().c_str()));
+
+            // restore_state_() also binds the RTC preference so later publish_state()
+            // calls keep saving. apply() copies position and tilt and publishes.
+            // It does not call control(), so boot never transmits or moves the blind.
+            auto restore = this->restore_state_();
+            if (this->restore_mode_ != DIRECTOLOR_COVER_RESTORE || !restore.has_value())
+                return;
+
+            ESP_LOGI(TAG, "Restored '%s' to position %.0f%% tilt %.0f%% without sending a command",
+                     DIRECTOROLOR_LOG_NAME(this->get_name().c_str()), restore->position * 100.0f, restore->tilt * 100.0f);
+            restore->apply(this);
         }
 
         void DirectolorCover::control(const cover::CoverCall &call)

@@ -18,10 +18,20 @@ namespace esphome
 
   namespace directolor_cover
   {
+    /// How a cover treats its saved position at boot.
+    /// RESTORE republishes that position and does not transmit or move.
+    /// There is no restore-and-call mode: calling control() would send RF.
+    enum DirectolorCoverRestoreMode : uint8_t
+    {
+      DIRECTOLOR_COVER_NO_RESTORE = 0,
+      DIRECTOLOR_COVER_RESTORE,
+    };
+
     class DirectolorCover : public cover::Cover, public Component
     {
     public:
       void set_radio_hub(directolor_radio::DirectolorRadio *hub) { this->hub_ = hub; }
+      void set_restore_mode(DirectolorCoverRestoreMode mode) { this->restore_mode_ = mode; }
       void set_radio_code(const std::vector<uint8_t> &code)
       {
         for (size_t i = 0; i < std::min(code.size(), radio_code_.size()); i++)
@@ -46,6 +56,7 @@ namespace esphome
       uint32_t movement_duration_ms_{0};
       bool tilt_supported_{false};
       uint8_t channel_{1};
+      DirectolorCoverRestoreMode restore_mode_{DIRECTOLOR_COVER_RESTORE};
     };
   }; // namespace directolor_cover
 } // namespace esphome
